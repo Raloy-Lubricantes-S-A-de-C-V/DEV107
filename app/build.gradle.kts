@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    // Namespace fundamental para View Binding
     namespace = "com.example.myapplication"
     compileSdk = 34
 
@@ -27,7 +28,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions { jvmTarget = "1.8" }
-    buildFeatures { viewBinding = true }
+
+    buildFeatures {
+        viewBinding = true // Habilita la generación de FragmentChangePasswordBinding
+    }
 }
 
 dependencies {
@@ -40,8 +44,4 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
     implementation(libs.androidx.security.crypto)
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.view)
 }

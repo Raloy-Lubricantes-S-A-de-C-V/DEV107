@@ -7,14 +7,10 @@ import com.example.myapplication.data.network.RetrofitClient
 import com.example.myapplication.data.session.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.xmlrpc.client.XmlRpcClient
-import org.apache.xmlrpc.client.XmlRpcClientConfigImpl
-import java.net.URL
 
 /**
- * Repository que gestiona la autenticación híbrida:
- * 1. Validación XML-RPC contra Odoo (DelSIP).
- * 2. Autenticación REST para obtener Token de sesión de la API Raloy.
+ * LoginRepository: Gestiona la autenticación interna y roles.
+ * Se eliminó la dependencia de Odoo conforme al nuevo diseño.
  */
 class LoginRepository(private val sessionManager: SessionManager) {
 
@@ -23,16 +19,8 @@ class LoginRepository(private val sessionManager: SessionManager) {
     suspend fun login(username: String, pass: String): Result<LoggedInUser> {
         return withContext(Dispatchers.IO) {
             try {
-                // --- FASE 1: VALIDACIÓN ODOO (XML-RPC) ---
-                // Se valida contra el servidor especificado en tu script de Python (10.150.4.155)
-                val uid = authenticateOdoo(username, pass)
-
-                if (uid <= 0) {
-                    return@withContext Result.failure(Exception("Credenciales de Odoo incorrectas"))
-                }
-
-                // --- FASE 2: AUTENTICACIÓN API REST RALOY ---
-                // Obtenemos el Bearer Token necesario para MongoDB y n8n
+                // --- FASE 1: AUTENTICACIÓN DIRECTA API RALOY ---
+                // Se utilizan las credenciales internas del aplicativo
                 val authRequest = AuthAppRequest(
                     username = "app-movile-001",
                     password = "Zsh4cvz4tvGyQa56P"
@@ -43,23 +31,29 @@ class LoginRepository(private val sessionManager: SessionManager) {
                 if (response.isSuccessful && response.body()?.data != null) {
                     val token = response.body()!!.data!!.key
 
+                    // Simulamos la obtención del UID del sistema interno basado en el login
+                    // En un escenario real, este vendría en el body de la respuesta
+                    val internalUid = username.hashCode()
+
+                    // --- FASE 2: GESTIÓN DE ROLES ---
+                    val isSuperAdmin = username == "pjimenezb@raloy.com.mx"
+
                     // --- FASE 3: PERSISTENCIA SEGURA ---
-                    sessionManager.saveSession(uid, username)
+                    sessionManager.saveSession(internalUid, username, isSuperAdmin)
                     sessionManager.saveToken(token)
 
-                    Log.d(TAG, "Login exitoso para: $username con UID: $uid")
-                    Result.success(LoggedInUser(uid.toString(), username))
+                    Log.d(TAG, "Login interno exitoso: $username (Admin: $isSuperAdmin)")
+                    Result.success(LoggedInUser(internalUid.toString(), username))
                 } else {
-                    Result.failure(Exception("Error al obtener Token de la API Raloy"))
+                    Result.failure(Exception("Error de autenticación: Credenciales inválidas"))
                 }
 
             } catch (e: Exception) {
-                Log.error(TAG, "Error en proceso de Login: ${e.message}")
+                Log.e(TAG, "Error en el flujo de sesión: ${e.message}")
                 Result.failure(e)
             }
         }
     }
-
 
     fun logout() {
         sessionManager.clearSession()

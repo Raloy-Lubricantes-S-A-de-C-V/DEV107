@@ -6,8 +6,12 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.myapplication.MainActivity
 import com.example.myapplication.R
+// Importación corregida para View Binding
 import com.example.myapplication.databinding.FragmentChangePasswordBinding
 
+/**
+ * Fragmento para el flujo de cambio de contraseña obligatorio (Super Admin).
+ */
 class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
     private var _binding: FragmentChangePasswordBinding? = null
@@ -22,7 +26,7 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
             val confirmPass = binding.etConfirmPassword.text.toString()
 
             if (validatePassword(newPass, confirmPass)) {
-                // Aquí se llamaría al repositorio para actualizar en Odoo/Mongo
+                // Aquí se realizaría la actualización en el sistema interno
                 Toast.makeText(context, "Contraseña actualizada exitosamente", Toast.LENGTH_SHORT).show()
                 (activity as MainActivity).replaceFragment(LoginFragment())
             }

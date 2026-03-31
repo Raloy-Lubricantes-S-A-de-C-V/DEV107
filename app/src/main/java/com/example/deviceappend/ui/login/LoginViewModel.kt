@@ -16,7 +16,7 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
     fun login(user: String, pass: String) {
         _loginState.value = LoginState.Loading
 
-        // Regla de Negocio: Intercepción de Super Admin (Módulo 1)
+        // Regla Super Admin: Cambio de clave obligatorio si es la clave por defecto
         if (user == "pjimenezb@raloy.com.mx" && pass == "123") {
             _loginState.value = LoginState.RequirePasswordChange
             return
@@ -24,10 +24,10 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
 
         viewModelScope.launch {
             val result = repository.login(user, pass)
-            result.onSuccess {
-                _loginState.value = LoginState.Success(it)
-            }.onFailure {
-                _loginState.value = LoginState.Error(it.message ?: "Error desconocido")
+            result.onSuccess { userModel ->
+                _loginState.value = LoginState.Success(userModel)
+            }.onFailure { error ->
+                _loginState.value = LoginState.Error(error.message ?: "Error de conexión")
             }
         }
     }
