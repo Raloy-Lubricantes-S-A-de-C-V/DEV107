@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Raloy Asset Manager</string>
+
+    <string name="step_0_title">Validación DelSIP</string>
+    <string name="step_0_desc">Ingrese nómina y capture foto del receptor.</string>
+    <string name="step_7_title">Auditoría Final</string>
+    <string name="step_7_desc">Escanee la etiqueta de 12 bits pintada.</string>
+
+    <string name="error_biometry">La identidad no coincide con DelSIP.</string>
+    <string name="error_bit_12">El Bit 12 requiere autorización legal.</string>
+
+    <string name="legal_disclaimer">Al aceptar, confirmo la recepción física del activo y asumo la custodia legal del mismo bajo las políticas de la empresa.</string>
+</resources>
