@@ -18,7 +18,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -36,31 +36,31 @@ android {
         viewBinding = true
     }
 
-    // Corrección del error de empaquetado
     packaging {
         resources {
+            // Sintaxis corregida para evitar fallos de compilación en Gradle
             excludes.add("/META-INF/{AL2.0,LGPL2.1}")
         }
     }
 }
 
 dependencies {
-    // UI y Core
+    // UI y Core (Obligatorios para Material 3 y Fragmentos)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
 
-    // IA y Visión (Gemini 1.5 Flash)
+    // IA Gemini 1.5 Flash
     implementation(libs.google.generativeai)
 
-    // Networking (API REST Raloy / MongoDB / n8n)
+    // Red (API REST Raloy / n8n)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
 
-    // Seguridad y Cámara
+    // Seguridad y Cámara (Wizard de Enrolamiento)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

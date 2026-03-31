@@ -12,7 +12,6 @@ import com.example.myapplication.ui.wizard.WizardFragment
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
-    // Ahora compilara correctamente gracias a Fragment KTX
     private val viewModel: LoginViewModel by viewModels()
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
@@ -33,16 +32,23 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         }
 
         viewModel.loginState.observe(viewLifecycleOwner) { state ->
+            // Control de visibilidad del componente progressBar añadido
             when (state) {
-                is LoginState.Loading -> binding.progressBar.visibility = View.VISIBLE
+                is LoginState.Loading -> {
+                    binding.progressBar.visibility = View.VISIBLE
+                    binding.btnLogin.isEnabled = false
+                }
                 is LoginState.RequirePasswordChange -> {
+                    binding.progressBar.visibility = View.GONE
                     (activity as MainActivity).replaceFragment(ChangePasswordFragment(), true)
                 }
                 is LoginState.Success -> {
+                    binding.progressBar.visibility = View.GONE
                     (activity as MainActivity).replaceFragment(WizardFragment())
                 }
                 is LoginState.Error -> {
                     binding.progressBar.visibility = View.GONE
+                    binding.btnLogin.isEnabled = true
                     Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 }
             }
