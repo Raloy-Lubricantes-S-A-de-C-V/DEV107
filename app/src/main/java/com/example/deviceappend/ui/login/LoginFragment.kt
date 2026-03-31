@@ -12,7 +12,8 @@ import com.example.myapplication.ui.wizard.WizardFragment
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
-    private val viewModel: LoginViewModel by viewModels { LoginViewModelFactory(requireContext()) }
+    // Ahora compilara correctamente gracias a Fragment KTX
+    private val viewModel: LoginViewModel by viewModels()
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
