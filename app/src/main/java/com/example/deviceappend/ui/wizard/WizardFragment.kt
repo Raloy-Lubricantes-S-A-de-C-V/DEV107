@@ -1,11 +1,12 @@
-package com.example.myapplication.ui.wizard
+package com.example.deviceappend.ui.wizard
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.example.myapplication.R
-import com.example.myapplication.databinding.FragmentWizardBinding
+// Se importa el R y Binding correctos del proyecto deviceappend
+import com.example.deviceappend.R
+import com.example.deviceappend.databinding.FragmentWizardBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class WizardFragment : Fragment(R.layout.fragment_wizard) {
@@ -28,8 +29,6 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
 
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                // CORRECCIÓN: ViewBinding convierte overlay_loading a overlayLoading
-                // Pero si el include tiene ID @+id/overlayLoading, se accede directamente:
                 is WizardState.Loading -> binding.overlayLoading.root.visibility = View.VISIBLE
                 is WizardState.ShowLegalTerms -> mostrarDialogoLegal(state.id)
                 is WizardState.Error -> {

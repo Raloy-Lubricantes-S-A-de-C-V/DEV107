@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    // Namespace unificado para evitar conflictos de recursos
-    namespace = "com.example.myapplication"
+    // Corregido: Debe coincidir con la estructura de carpetas src/main/java/com/example/deviceappend
+    namespace = "com.example.deviceappend"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.example.deviceappend"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -34,31 +34,20 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true // Requerido para acceder a botones y vistas del Wizard
-    }
-
-    packaging {
-        resources {
-            // Se usa .add() para garantizar compatibilidad con versiones de Gradle
-            excludes.add("/META-INF/{AL2.0,LGPL2.1}")
-        }
+        viewBinding = true
     }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.fragment.ktx) // Habilita el delegado by viewModels()
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
-
-    // IA Gemini y Networking
     implementation(libs.google.generativeai)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
-
-    // Seguridad y Cámara (Validación de Bits/Biometría)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

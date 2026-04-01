@@ -1,19 +1,24 @@
-package com.example.myapplication.ui.login
+package com.example.deviceappend.ui.login
 
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.example.myapplication.MainActivity
-import com.example.myapplication.R
-import com.example.myapplication.databinding.FragmentLoginBinding
-import com.example.myapplication.ui.wizard.WizardFragment
+import com.example.deviceappend.MainActivity
+import com.example.deviceappend.R
+import com.example.deviceappend.databinding.FragmentLoginBinding
+import com.example.deviceappend.ui.wizard.WizardFragment
+import com.example.deviceappend.core.LoginRepository
+import com.example.deviceappend.core.session.SessionManager
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
-    // Ahora compilara correctamente gracias a Fragment KTX en build.gradle.kts
-    private val viewModel: LoginViewModel by viewModels()
+    // Se inyecta el repositorio manualmente a través de la Factory corregida
+    private val viewModel: LoginViewModel by viewModels {
+        LoginViewModel.Factory(LoginRepository(SessionManager(requireContext())))
+    }
+
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 

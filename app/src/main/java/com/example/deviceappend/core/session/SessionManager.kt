@@ -1,14 +1,10 @@
-package com.example.myapplication.data.session
+package com.example.deviceappend.core.session
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
-/**
- * SessionManager: Gestión de persistencia cifrada con AES256.
- * Protege el Token de la API de Raloy y los datos del técnico en reposo.
- */
 class SessionManager(context: Context) {
 
     private val masterKey = MasterKey.Builder(context)

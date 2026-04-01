@@ -1,11 +1,12 @@
-package com.example.myapplication.ui.login
+package com.example.deviceappend.ui.login
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.data.LoginRepository
-import com.example.myapplication.data.model.LoggedInUser
+import com.example.deviceappend.core.LoginRepository
+import com.example.deviceappend.data.model.LoggedInUser
 import kotlinx.coroutines.launch
 
 class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
@@ -16,7 +17,7 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
     fun login(user: String, pass: String) {
         _loginState.value = LoginState.Loading
 
-        // Regla Super Admin: Cambio de clave obligatorio si es la clave por defecto
+        // Regla de negocio para Super Admin
         if (user == "pjimenezb@raloy.com.mx" && pass == "123") {
             _loginState.value = LoginState.RequirePasswordChange
             return
@@ -29,6 +30,14 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
             }.onFailure { error ->
                 _loginState.value = LoginState.Error(error.message ?: "Error de conexión")
             }
+        }
+    }
+
+    // FACTORY NECESARIA PARA INYECCIÓN DE DEPENDENCIAS MANUAL
+    class Factory(private val repository: LoginRepository) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return LoginViewModel(repository) as T
         }
     }
 }
