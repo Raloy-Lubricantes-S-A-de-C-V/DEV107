@@ -14,7 +14,6 @@ import com.example.deviceappend.core.session.SessionManager
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
-    // Se inyecta el repositorio manualmente a través de la Factory corregida
     private val viewModel: LoginViewModel by viewModels {
         LoginViewModel.Factory(LoginRepository(SessionManager(requireContext())))
     }
@@ -29,11 +28,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         binding.btnLogin.setOnClickListener {
             val user = binding.etUsername.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
-
             if (user.isNotEmpty() && pass.isNotEmpty()) {
                 viewModel.login(user, pass)
-            } else {
-                Toast.makeText(context, "Por favor llene todos los campos", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -45,11 +41,11 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 }
                 is LoginState.RequirePasswordChange -> {
                     binding.progressBar.visibility = View.GONE
-                    (activity as MainActivity).replaceFragment(ChangePasswordFragment(), true)
+                    (activity as? MainActivity)?.replaceFragment(ChangePasswordFragment(), true)
                 }
                 is LoginState.Success -> {
                     binding.progressBar.visibility = View.GONE
-                    (activity as MainActivity).replaceFragment(WizardFragment())
+                    (activity as? MainActivity)?.replaceFragment(WizardFragment())
                 }
                 is LoginState.Error -> {
                     binding.progressBar.visibility = View.GONE

@@ -1,13 +1,12 @@
-package com.example.myapplication.ui.login
+package com.example.deviceappend.ui.login
 
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.myapplication.MainActivity
-import com.example.myapplication.R
-// Importación corregida para View Binding
-import com.example.myapplication.databinding.FragmentChangePasswordBinding
+import com.example.deviceappend.MainActivity
+import com.example.deviceappend.R
+import com.example.deviceappend.databinding.FragmentChangePasswordBinding
 
 /**
  * Fragmento para el flujo de cambio de contraseña obligatorio (Super Admin).
@@ -26,9 +25,9 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
             val confirmPass = binding.etConfirmPassword.text.toString()
 
             if (validatePassword(newPass, confirmPass)) {
-                // Aquí se realizaría la actualización en el sistema interno
                 Toast.makeText(context, "Contraseña actualizada exitosamente", Toast.LENGTH_SHORT).show()
-                (activity as MainActivity).replaceFragment(LoginFragment())
+                // Navegación corregida al paquete deviceappend
+                (activity as? MainActivity)?.replaceFragment(LoginFragment())
             }
         }
     }

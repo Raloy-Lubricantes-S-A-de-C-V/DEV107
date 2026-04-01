@@ -12,20 +12,25 @@ class LoginRepository(private val sessionManager: SessionManager) {
     suspend fun login(username: String, pass: String): Result<LoggedInUser> {
         return withContext(Dispatchers.IO) {
             try {
+                // Configuración de la petición con las credenciales del aplicativo
                 val authRequest = AuthAppRequest(
                     username = "app-movile-001",
                     password = "Zsh4cvz4tvGyQa56P"
                 )
 
+                // Acceso a la instancia única de Retrofit
                 val response = RetrofitClient.instance.autenticateApp(authRequest)
 
                 if (response.isSuccessful && response.body()?.data != null) {
                     val token = response.body()!!.data!!.key
+
+                    // Persistencia de sesión
                     sessionManager.saveSession(username.hashCode(), username, false)
                     sessionManager.saveToken(token)
+
                     Result.success(LoggedInUser(username.hashCode().toString(), username))
                 } else {
-                    Result.failure(Exception("Error de autenticación"))
+                    Result.failure(Exception("Error de autenticación: Credenciales inválidas"))
                 }
             } catch (e: Exception) {
                 Result.failure(e)

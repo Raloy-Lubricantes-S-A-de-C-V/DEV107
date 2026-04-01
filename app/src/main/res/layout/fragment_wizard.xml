@@ -58,4 +58,8 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
+    <include
+        android:id="@+id/overlayLoading"
+        layout="@layout/overlay_loading"
+        android:visibility="gone" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

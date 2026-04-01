@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-// Se importa el R y Binding correctos del proyecto deviceappend
 import com.example.deviceappend.R
 import com.example.deviceappend.databinding.FragmentWizardBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -29,8 +28,14 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
 
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is WizardState.Loading -> binding.overlayLoading.root.visibility = View.VISIBLE
-                is WizardState.ShowLegalTerms -> mostrarDialogoLegal(state.id)
+                // ACCESO CORREGIDO: Si el ID en XML es overlayLoading, se usa así:
+                is WizardState.Loading -> {
+                    binding.overlayLoading.root.visibility = View.VISIBLE
+                }
+                is WizardState.ShowLegalTerms -> {
+                    binding.overlayLoading.root.visibility = View.GONE
+                    mostrarDialogoLegal(state.id)
+                }
                 is WizardState.Error -> {
                     binding.overlayLoading.root.visibility = View.GONE
                     MaterialAlertDialogBuilder(requireContext())
@@ -39,7 +44,9 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
                         .setPositiveButton("Reintentar", null)
                         .show()
                 }
-                else -> binding.overlayLoading.root.visibility = View.GONE
+                else -> {
+                    binding.overlayLoading.root.visibility = View.GONE
+                }
             }
         }
     }

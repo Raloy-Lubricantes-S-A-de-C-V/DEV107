@@ -1,4 +1,4 @@
-package com.example.myapplication.data.model
+package com.example.deviceappend.data.model
 
 /**
  * Modelo de datos para el usuario autenticado.

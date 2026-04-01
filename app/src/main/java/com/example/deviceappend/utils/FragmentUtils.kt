@@ -1,13 +1,13 @@
-package com.example.myapplication.utils
+package com.example.deviceappend.utils
 
-import android.util.Log // CORRECCIÓN: Importar Log de Android
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.myapplication.R
-import com.example.myapplication.data.network.AuthAppRequest // CORRECCIÓN: Importar el modelo
-import com.example.myapplication.data.network.RetrofitClient
+import com.example.deviceappend.R
+import com.example.deviceappend.core.network.AuthAppRequest
+import com.example.deviceappend.core.network.RetrofitClient
 import kotlinx.coroutines.*
 
 fun Fragment.ejecutarFlujoSeguro(
@@ -26,30 +26,18 @@ fun Fragment.ejecutarFlujoSeguro(
         val api = RetrofitClient.instance
 
         withContext(Dispatchers.IO) {
-            for (intento in 1..3) {
-                try {
-                    // CORRECCIÓN: Pasar las credenciales requeridas por ApiService
-                    val request = AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P")
-                    val response = api.autenticateApp(request)
-                    if (response.isSuccessful) {
-                        sesionValida = true
-                        break
-                    }
-                } catch (e: Exception) {
-                    Log.e("FlujoSeguro", "Intento $intento fallido: ${e.message}")
-                }
-                delay(500)
+            try {
+                val request = AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P")
+                val response = api.autenticateApp(request)
+                if (response.isSuccessful) sesionValida = true else sesionValida = false
+            } catch (e: Exception) {
+                Log.e("FlujoSeguro", "Error: ${e.message}")
             }
         }
 
         if (sesionValida) {
-            try {
-                onSuccess()
-            } catch (e: Exception) {
-                onError("Error: ${e.message}")
-            } finally {
-                overlay?.visibility = View.GONE
-            }
+            try { onSuccess() } catch (e: Exception) { onError("Error: ${e.message}") }
+            finally { overlay?.visibility = View.GONE }
         } else {
             overlay?.visibility = View.GONE
             onError("Sesión expirada.")
