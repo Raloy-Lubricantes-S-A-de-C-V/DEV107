@@ -19,7 +19,6 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         _binding = FragmentWizardBinding.bind(view)
 
         setupObservers()
-        setupListeners()
     }
 
     private fun setupObservers() {
@@ -29,45 +28,37 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
 
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is WizardState.Loading -> binding.overlayLoading.visibility = View.VISIBLE
+                // CORRECCIÓN: ViewBinding convierte overlay_loading a overlayLoading
+                // Pero si el include tiene ID @+id/overlayLoading, se accede directamente:
+                is WizardState.Loading -> binding.overlayLoading.root.visibility = View.VISIBLE
                 is WizardState.ShowLegalTerms -> mostrarDialogoLegal(state.id)
                 is WizardState.Error -> {
-                    binding.overlayLoading.visibility = View.GONE
+                    binding.overlayLoading.root.visibility = View.GONE
                     MaterialAlertDialogBuilder(requireContext())
                         .setTitle("Atención")
                         .setMessage(state.message)
                         .setPositiveButton("Reintentar", null)
                         .show()
                 }
-                else -> binding.overlayLoading.visibility = View.GONE
+                else -> binding.overlayLoading.root.visibility = View.GONE
             }
         }
     }
 
     private fun updateUIForStep(step: Int) {
         binding.tvStepTitle.text = when(step) {
-            0 -> "Validación de Identidad (DelSIP)"
-            1 -> "Modalidad de Asignación"
-            4 -> "Escaneo de Placa (OCR)"
-            7 -> "Verificación de Etiqueta (Bits)"
+            0 -> "Validación de Identidad"
+            7 -> "Verificación de Etiqueta"
             else -> "Paso $step"
         }
-        // Lógica para inflar sub-vistas dinámicamente según el paso
     }
 
     private fun mostrarDialogoLegal(id: String) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Responsabilidad Legal (Bit 12)")
-            .setMessage("Al aceptar, usted reconoce la custodia del activo $id y las responsabilidades derivadas...")
-            .setPositiveButton("ACEPTO") { _, _ -> /* Finalizar en Mongo */ }
-            .setCancelable(false)
+            .setTitle("Responsabilidad Legal")
+            .setMessage("Confirmación para el activo $id")
+            .setPositiveButton("ACEPTO", null)
             .show()
-    }
-
-    private fun setupListeners() {
-        binding.btnNext.setOnClickListener {
-            // Lógica para capturar foto o procesar datos del paso actual
-        }
     }
 
     override fun onDestroyView() {

@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    // Namespace unificado para evitar conflictos de recursos
     namespace = "com.example.myapplication"
     compileSdk = 34
 
@@ -33,34 +34,31 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
+        viewBinding = true // Requerido para acceder a botones y vistas del Wizard
     }
 
     packaging {
         resources {
-            // Sintaxis corregida para evitar fallos de compilación en Gradle
+            // Se usa .add() para garantizar compatibilidad con versiones de Gradle
             excludes.add("/META-INF/{AL2.0,LGPL2.1}")
         }
     }
 }
 
 dependencies {
-    // UI y Core (Obligatorios para Material 3 y Fragmentos)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.fragment.ktx) // Habilita el delegado by viewModels()
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
 
-    // IA Gemini 1.5 Flash
+    // IA Gemini y Networking
     implementation(libs.google.generativeai)
-
-    // Red (API REST Raloy / n8n)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
 
-    // Seguridad y Cámara (Wizard de Enrolamiento)
+    // Seguridad y Cámara (Validación de Bits/Biometría)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

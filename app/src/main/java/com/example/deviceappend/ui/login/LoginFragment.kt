@@ -12,6 +12,7 @@ import com.example.myapplication.ui.wizard.WizardFragment
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
+    // Ahora compilara correctamente gracias a Fragment KTX en build.gradle.kts
     private val viewModel: LoginViewModel by viewModels()
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
@@ -32,7 +33,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         }
 
         viewModel.loginState.observe(viewLifecycleOwner) { state ->
-            // Control de visibilidad del componente progressBar añadido
             when (state) {
                 is LoginState.Loading -> {
                     binding.progressBar.visibility = View.VISIBLE
