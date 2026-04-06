@@ -16,7 +16,6 @@ class LoginRepository(private val sessionManager: SessionManager) {
                 // FASE 1: Autenticación de la Aplicación
                 val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
                 if (!appAuth.isSuccessful) return@withContext Result.failure(Exception("Fallo App Auth"))
-
                 sessionManager.saveToken(appAuth.body()?.data?.key ?: "")
 
                 // FASE 2: Login de Usuario Final
@@ -24,11 +23,11 @@ class LoginRepository(private val sessionManager: SessionManager) {
                 if (userAuth.isSuccessful && userAuth.body()?.data != null) {
                     val userToken = userAuth.body()!!.data!!.key
 
-                    // FASE 3: Consultar Permisos (is_sys) - ERROR CORREGIDO AQUÍ
+                    // FASE 3: Consultar Permisos (Error corregido: api en lugar de ap1)
                     val sysAdminRes = api.checkIsSysAdmin(CheckSysAdminRequest(user = email))
                     val isSystemAdmin = sysAdminRes.body()?.is_sys ?: false
 
-                    // FASE 4: Persistencia Segura Final
+                    // FASE 4: Persistencia
                     val internalUid = email.hashCode()
                     sessionManager.saveSession(internalUid, email, isSystemAdmin)
                     sessionManager.saveToken(userToken)
