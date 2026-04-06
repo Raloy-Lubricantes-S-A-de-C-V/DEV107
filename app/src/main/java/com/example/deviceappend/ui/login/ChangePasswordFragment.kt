@@ -41,18 +41,13 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
         lifecycleScope.launch {
             try {
-                // PASO 1: Obtener el Hash PBKDF2 del endpoint AYd34kWfLfPRY05vO
                 val hashRes = api.getPasswordHash(nuevaClave)
                 val hashGenerado = hashRes.body()?.get("hash")
 
                 if (hashRes.isSuccessful && hashGenerado != null) {
-
-                    // PASO 2: Mandar el Hash obtenido al endpoint update-password
                     val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))
-
                     if (updateRes.isSuccessful) {
-                        Toast.makeText(context, "Contraseña actualizada. Inicia sesión.", Toast.LENGTH_LONG).show()
-                        // Cerramos sesión para limpiar temporales y volver al Login
+                        Toast.makeText(context, "Contraseña actualizada exitosamente", Toast.LENGTH_LONG).show()
                         (activity as? MainActivity)?.logout()
                     } else {
                         Toast.makeText(context, "Error al actualizar en servidor", Toast.LENGTH_SHORT).show()

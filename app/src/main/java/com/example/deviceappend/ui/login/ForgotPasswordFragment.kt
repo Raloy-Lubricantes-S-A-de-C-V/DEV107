@@ -25,7 +25,6 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentForgotPasswordBinding.bind(view)
-
         setupMenu()
 
         binding.btnSendEmail.setOnClickListener { sendEmailFlow() }
@@ -34,13 +33,11 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
         binding.btnVerifyCode.setOnClickListener {
             val input = binding.etVerificationCode.text.toString().trim()
             if (input == currentSalt && input.isNotEmpty()) {
-                // Guardamos el correo en sesión para que ChangePasswordFragment lo use
                 val session = SessionManager(requireContext())
                 session.saveSession(0, binding.etRecoveryEmail.text.toString().trim(), false)
-
                 (activity as? MainActivity)?.replaceFragment(ChangePasswordFragment(), true)
             } else {
-                Toast.makeText(context, "Código de 5 dígitos incorrecto", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Código incorrecto", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -51,12 +48,10 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
             binding.etRecoveryEmail.error = "Ingrese su correo"
             return
         }
-
         currentSalt = (10000..99999).random().toString()
 
         lifecycleScope.launch {
             try {
-                // El endpoint en ApiService.kt debe usar la versión codificada (%C3%B1a)
                 val res = RetrofitClient.instance.sendRecoveryEmail(RecoveryEmailRequest(email, currentSalt))
                 if (res.isSuccessful) {
                     binding.cardValidation.visibility = View.VISIBLE
