@@ -5,42 +5,48 @@ import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
-import com.example.deviceappend.core.network.AuthAppRequest
 import com.example.deviceappend.core.network.RetrofitClient
 import kotlinx.coroutines.*
 
-fun Fragment.ejecutarFlujoSeguro(
-    tituloCarga: String,
-    onSuccess: suspend CoroutineScope.() -> Unit,
-    onError: (String) -> Unit
+/**
+ * Verifica la conexión 3 veces. Si falla, cierra sesión.
+ */
+fun Fragment.verificarConexionYEjecutar(
+    mensaje: String = "Validando conexión...",
+    onSuccess: suspend CoroutineScope.() -> Unit
 ) {
-    val overlay = view?.findViewById<View>(R.id.overlayLoading)
-    val tvTitle = view?.findViewById<TextView>(R.id.tvLoadingTitle)
+    val overlay = activity?.findViewById<View>(R.id.overlayLoading)
+    val tvTitle = activity?.findViewById<TextView>(R.id.tvLoadingTitle)
 
     overlay?.visibility = View.VISIBLE
-    tvTitle?.text = tituloCarga
+    tvTitle?.text = mensaje
 
     viewLifecycleOwner.lifecycleScope.launch {
-        var sesionValida = false
+        var conectado = false
         val api = RetrofitClient.instance
 
         withContext(Dispatchers.IO) {
-            try {
-                val request = AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P")
-                val response = api.autenticateApp(request)
-                if (response.isSuccessful) sesionValida = true else sesionValida = false
-            } catch (e: Exception) {
-                Log.e("FlujoSeguro", "Error: ${e.message}")
+            for (intento in 1..3) {
+                try {
+                    val response = api.checkDatabaseConnectivity()
+                    if (response.isSuccessful) {
+                        conectado = true
+                        break
+                    }
+                } catch (e: Exception) {
+                    Log.e("Connectivity", "Intento $intento fallido")
+                }
+                if (intento < 3) delay(1500)
             }
         }
 
-        if (sesionValida) {
-            try { onSuccess() } catch (e: Exception) { onError("Error: ${e.message}") }
-            finally { overlay?.visibility = View.GONE }
+        overlay?.visibility = View.GONE
+        if (conectado) {
+            onSuccess()
         } else {
-            overlay?.visibility = View.GONE
-            onError("Sesión expirada.")
+            (activity as? MainActivity)?.logout()
         }
     }
 }

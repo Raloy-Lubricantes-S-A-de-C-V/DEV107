@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#004A99</color> <color name="primary_variant">#003366</color>
-    <color name="secondary">#FFC107</color> <color name="background">#F8F9FA</color>
+    <color name="primary">#004A99</color>
+    <color name="primary_variant">#003366</color>
+    <color name="secondary">#FFC107</color>
+    <color name="background">#F8F9FA</color>
     <color name="surface">#FFFFFF</color>
-    <color name="error">#B00020</color>
-    <color name="success">#4CAF50</color>
+    <color name="home_yellow">#FFC107</color>
+    <color name="home_green">#4CAF50</color>
+    <color name="home_red">#F44336</color>
+    <color name="home_blue">#2196F3</color>
 </resources>

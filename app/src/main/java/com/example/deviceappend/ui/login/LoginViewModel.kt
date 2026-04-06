@@ -17,12 +17,8 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
     fun login(user: String, pass: String) {
         _loginState.value = LoginState.Loading
 
-        // Regla de negocio para Super Admin
-        if (user == "pjimenezb@raloy.com.mx" && pass == "123") {
-            _loginState.value = LoginState.RequirePasswordChange
-            return
-        }
-
+        // Se eliminó la validación local de "123" que activaba RequirePasswordChange.
+        // Ahora el flujo siempre consulta directamente a la API de Raloy.
         viewModelScope.launch {
             val result = repository.login(user, pass)
             result.onSuccess { userModel ->
@@ -33,7 +29,6 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
         }
     }
 
-    // FACTORY NECESARIA PARA INYECCIÓN DE DEPENDENCIAS MANUAL
     class Factory(private val repository: LoginRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

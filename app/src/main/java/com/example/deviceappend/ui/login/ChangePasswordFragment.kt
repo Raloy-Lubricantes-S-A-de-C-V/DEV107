@@ -4,13 +4,15 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
+import com.example.deviceappend.core.network.RetrofitClient
+import com.example.deviceappend.core.network.UpdatePasswordRequest
+import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.databinding.FragmentChangePasswordBinding
+import kotlinx.coroutines.launch
 
-/**
- * Fragmento para el flujo de cambio de contraseña obligatorio (Super Admin).
- */
 class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
     private var _binding: FragmentChangePasswordBinding? = null
@@ -21,27 +23,45 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
         _binding = FragmentChangePasswordBinding.bind(view)
 
         binding.btnUpdatePassword.setOnClickListener {
-            val newPass = binding.etNewPassword.text.toString()
-            val confirmPass = binding.etConfirmPassword.text.toString()
+            val pass1 = binding.etNewPassword.text.toString()
+            val pass2 = binding.etConfirmPassword.text.toString()
 
-            if (validatePassword(newPass, confirmPass)) {
-                Toast.makeText(context, "Contraseña actualizada exitosamente", Toast.LENGTH_SHORT).show()
-                // Navegación corregida al paquete deviceappend
-                (activity as? MainActivity)?.replaceFragment(LoginFragment())
+            if (pass1 == pass2 && pass1.isNotEmpty()) {
+                ejecutarCambioDeContrasena(pass1)
+            } else {
+                Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun validatePassword(p1: String, p2: String): Boolean {
-        if (p1.length < 8) {
-            binding.etNewPassword.error = "Mínimo 8 caracteres"
-            return false
+    private fun ejecutarCambioDeContrasena(nuevaClave: String) {
+        val session = SessionManager(requireContext())
+        val email = session.getUsername() ?: ""
+        val api = RetrofitClient.instance
+
+        lifecycleScope.launch {
+            try {
+                // PASO 1: Obtener el Hash PBKDF2 del endpoint AYd34kWfLfPRY05vO
+                val hashRes = api.getPasswordHash(nuevaClave)
+                val hashGenerado = hashRes.body()?.get("hash")
+
+                if (hashRes.isSuccessful && hashGenerado != null) {
+
+                    // PASO 2: Mandar el Hash obtenido al endpoint update-password
+                    val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))
+
+                    if (updateRes.isSuccessful) {
+                        Toast.makeText(context, "Contraseña actualizada. Inicia sesión.", Toast.LENGTH_LONG).show()
+                        // Cerramos sesión para limpiar temporales y volver al Login
+                        (activity as? MainActivity)?.logout()
+                    } else {
+                        Toast.makeText(context, "Error al actualizar en servidor", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Fallo de conexión: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
-        if (p1 != p2) {
-            binding.etConfirmPassword.error = "Las contraseñas no coinciden"
-            return false
-        }
-        return true
     }
 
     override fun onDestroyView() {

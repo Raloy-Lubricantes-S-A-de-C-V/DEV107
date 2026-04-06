@@ -1,13 +1,14 @@
 package com.example.deviceappend
 
 import android.os.Bundle
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-// Importaciones ajustadas a la carpeta 'core' que se ve en tu panel lateral
-import com.example.deviceappend.core.network.RetrofitClient
 import com.example.deviceappend.core.session.SessionManager
+import com.example.deviceappend.ui.home.HomeFragment
 import com.example.deviceappend.ui.login.LoginFragment
-import com.example.deviceappend.ui.wizard.WizardFragment
+import com.example.deviceappend.core.network.RetrofitClient
+import com.google.android.material.appbar.MaterialToolbar
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,7 +18,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inicialización de motores de red y sesión
+        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
+        setSupportActionBar(toolbar)
+
         RetrofitClient.init(applicationContext)
         sessionManager = SessionManager(this)
 
@@ -27,28 +30,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkSessionAndNavigate() {
-        val userToken = sessionManager.getToken()
-        val userId = sessionManager.getUid()
-
-        if (userToken != null && userId != -1) {
-            replaceFragment(WizardFragment())
+        if (sessionManager.getToken() != null) {
+            replaceFragment(HomeFragment())
         } else {
             replaceFragment(LoginFragment())
         }
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_home -> {
+                // Limpia la pila y regresa al HomeFragment
+                supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                replaceFragment(com.example.deviceappend.ui.home.HomeFragment())
+                true
+            }
+            R.id.action_logout -> {
+                logout()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
     fun replaceFragment(fragment: Fragment, addToBackStack: Boolean = false) {
         val transaction = supportFragmentManager.beginTransaction()
-            .setCustomAnimations(
-                android.R.anim.fade_in,
-                android.R.anim.fade_out
-            )
             .replace(R.id.main_container, fragment)
-
-        if (addToBackStack) {
-            transaction.addToBackStack(null)
-        }
-
+        if (addToBackStack) transaction.addToBackStack(null)
         transaction.commit()
+    }
+
+    fun logout() {
+        sessionManager.clearSession()
+        invalidateOptionsMenu()
+        replaceFragment(LoginFragment())
     }
 }

@@ -1,12 +1,16 @@
 package com.example.deviceappend.ui.wizard
 
 import android.os.Bundle
-import android.view.View
+import android.view.*
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 import com.example.deviceappend.databinding.FragmentWizardBinding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.example.deviceappend.utils.verificarConexionYEjecutar
 
 class WizardFragment : Fragment(R.layout.fragment_wizard) {
 
@@ -18,53 +22,35 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentWizardBinding.bind(view)
 
-        setupObservers()
+        // 1. Registro del Menú (Para ver el botón Home)
+        setupMenu()
+
+        // 2. Verificación de conexión obligatoria al iniciar el Wizard
+        verificarConexionYEjecutar("Preparando validación...") {
+            setupUI()
+        }
     }
 
-    private fun setupObservers() {
-        viewModel.step.observe(viewLifecycleOwner) { step ->
-            updateUIForStep(step)
+    private fun setupUI() {
+        binding.btnNext.setOnClickListener {
+            // Lógica para avanzar en los pasos del Wizard
         }
+    }
 
-        viewModel.uiState.observe(viewLifecycleOwner) { state ->
-            when (state) {
-                // ACCESO CORREGIDO: Si el ID en XML es overlayLoading, se usa así:
-                is WizardState.Loading -> {
-                    binding.overlayLoading.root.visibility = View.VISIBLE
-                }
-                is WizardState.ShowLegalTerms -> {
-                    binding.overlayLoading.root.visibility = View.GONE
-                    mostrarDialogoLegal(state.id)
-                }
-                is WizardState.Error -> {
-                    binding.overlayLoading.root.visibility = View.GONE
-                    MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Atención")
-                        .setMessage(state.message)
-                        .setPositiveButton("Reintentar", null)
-                        .show()
-                }
-                else -> {
-                    binding.overlayLoading.root.visibility = View.GONE
-                }
+    private fun setupMenu() {
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.main_menu, menu)
+                // Aquí NO ocultamos action_home, para que sea visible
+                menu.findItem(R.id.action_home)?.isVisible = true
             }
-        }
-    }
 
-    private fun updateUIForStep(step: Int) {
-        binding.tvStepTitle.text = when(step) {
-            0 -> "Validación de Identidad"
-            7 -> "Verificación de Etiqueta"
-            else -> "Paso $step"
-        }
-    }
-
-    private fun mostrarDialogoLegal(id: String) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Responsabilidad Legal")
-            .setMessage("Confirmación para el activo $id")
-            .setPositiveButton("ACEPTO", null)
-            .show()
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                // La acción la maneja MainActivity.kt
+                return false
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     override fun onDestroyView() {

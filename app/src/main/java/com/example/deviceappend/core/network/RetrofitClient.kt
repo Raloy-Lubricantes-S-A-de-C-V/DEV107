@@ -7,6 +7,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
+    // URL actualizada según requerimiento
     private const val BASE_URL = "https://apir.raloy.com.mx/kioskoit/api/v1/"
     private var retrofit: Retrofit? = null
 
@@ -26,5 +27,5 @@ object RetrofitClient {
 
     val instance: ApiService
         get() = retrofit?.create(ApiService::class.java)
-            ?: throw IllegalStateException("RetrofitClient no inicializado")
+            ?: throw IllegalStateException("RetrofitClient debe inicializarse en MainActivity.")
 }

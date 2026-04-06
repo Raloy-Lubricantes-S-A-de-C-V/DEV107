@@ -1,37 +1,53 @@
 package com.example.deviceappend.core
 
 import com.example.deviceappend.data.model.LoggedInUser
-import com.example.deviceappend.core.network.AuthAppRequest
-import com.example.deviceappend.core.network.RetrofitClient
+import com.example.deviceappend.core.network.*
 import com.example.deviceappend.core.session.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class LoginRepository(private val sessionManager: SessionManager) {
 
-    suspend fun login(username: String, pass: String): Result<LoggedInUser> {
+    suspend fun login(email: String, pass: String): Result<LoggedInUser> {
         return withContext(Dispatchers.IO) {
             try {
-                // Configuración de la petición con las credenciales del aplicativo
-                val authRequest = AuthAppRequest(
-                    username = "app-movile-001",
+                val api = RetrofitClient.instance
+
+                // FASE 1: Autenticación de la Aplicación (Auth General)
+                val appAuthRequest = AuthAppRequest(
+                    username = "app-movile-001", // Credenciales internas de la tabla register_app
                     password = "Zsh4cvz4tvGyQa56P"
                 )
+                val appResponse = api.autenticateApp(appAuthRequest)
 
-                // Acceso a la instancia única de Retrofit
-                val response = RetrofitClient.instance.autenticateApp(authRequest)
-
-                if (response.isSuccessful && response.body()?.data != null) {
-                    val token = response.body()!!.data!!.key
-
-                    // Persistencia de sesión
-                    sessionManager.saveSession(username.hashCode(), username, false)
-                    sessionManager.saveToken(token)
-
-                    Result.success(LoggedInUser(username.hashCode().toString(), username))
-                } else {
-                    Result.failure(Exception("Error de autenticación: Credenciales inválidas"))
+                if (!appResponse.isSuccessful || appResponse.body()?.data == null) {
+                    return@withContext Result.failure(Exception("Fallo en autenticación de aplicación"))
                 }
+
+                // Guardamos temporalmente el token de la app para que el Interceptor lo use en la siguiente petición
+                sessionManager.saveToken(appResponse.body()!!.data!!.key)
+
+                // FASE 2: Login de Usuario Final (Tabla Rol)
+                val userRequest = UserLoginRequest(username = email, password = pass)
+                val userResponse = api.loginUser(userRequest)
+
+                if (userResponse.isSuccessful && userResponse.body()?.data != null) {
+                    val userToken = userResponse.body()!!.data!!.key
+
+                    // FASE 3: Consultar Permisos (is_sys)
+                    val sysAdminResponse = api.checkIsSysAdmin(CheckSysAdminRequest(user = email))
+                    val isSystemAdmin = sysAdminResponse.body()?.is_sys ?: false
+
+                    // FASE 4: Persistencia Segura Final
+                    val internalUid = email.hashCode()
+                    sessionManager.saveSession(internalUid, email, isSystemAdmin)
+                    sessionManager.saveToken(userToken) // Guardamos el token definitivo del usuario
+
+                    Result.success(LoggedInUser(internalUid.toString(), email))
+                } else {
+                    Result.failure(Exception("Credenciales de usuario inválidas"))
+                }
+
             } catch (e: Exception) {
                 Result.failure(e)
             }

@@ -8,7 +8,7 @@ import androidx.fragment.app.viewModels
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 import com.example.deviceappend.databinding.FragmentLoginBinding
-import com.example.deviceappend.ui.wizard.WizardFragment
+import com.example.deviceappend.ui.home.HomeFragment
 import com.example.deviceappend.core.LoginRepository
 import com.example.deviceappend.core.session.SessionManager
 
@@ -25,33 +25,39 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLoginBinding.bind(view)
 
+        // Configuración de botones
         binding.btnLogin.setOnClickListener {
             val user = binding.etUsername.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
-            if (user.isNotEmpty() && pass.isNotEmpty()) {
-                viewModel.login(user, pass)
-            }
+            if (user.isNotEmpty() && pass.isNotEmpty()) viewModel.login(user, pass)
         }
 
+        // Navegación a Recuperación (Causa del error actual)
+        binding.tvForgotPassword.setOnClickListener {
+            (activity as? MainActivity)?.replaceFragment(ForgotPasswordFragment(), true)
+        }
+
+        // Enlace a Creación de Cuenta
+        binding.tvCreateAccount.setOnClickListener {
+            Toast.makeText(context, "Flujo de registro en desarrollo", Toast.LENGTH_SHORT).show()
+        }
+
+        setupObservers()
+    }
+
+    private fun setupObservers() {
         viewModel.loginState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is LoginState.Loading -> {
-                    binding.progressBar.visibility = View.VISIBLE
-                    binding.btnLogin.isEnabled = false
-                }
-                is LoginState.RequirePasswordChange -> {
-                    binding.progressBar.visibility = View.GONE
-                    (activity as? MainActivity)?.replaceFragment(ChangePasswordFragment(), true)
-                }
+                is LoginState.Loading -> binding.progressBar.visibility = View.VISIBLE
                 is LoginState.Success -> {
                     binding.progressBar.visibility = View.GONE
-                    (activity as? MainActivity)?.replaceFragment(WizardFragment())
+                    (activity as? MainActivity)?.replaceFragment(HomeFragment())
                 }
                 is LoginState.Error -> {
                     binding.progressBar.visibility = View.GONE
-                    binding.btnLogin.isEnabled = true
                     Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 }
+                else -> {}
             }
         }
     }
