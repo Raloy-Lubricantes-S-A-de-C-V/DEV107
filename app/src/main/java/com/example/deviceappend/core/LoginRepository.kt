@@ -13,9 +13,9 @@ class LoginRepository(private val sessionManager: SessionManager) {
             try {
                 val api = RetrofitClient.instance
 
-                // FASE 1: Autenticación de la Aplicación (Auth General)
+                // FASE 1: Autenticación de la Aplicación
                 val appAuthRequest = AuthAppRequest(
-                    username = "app-movile-001", // Credenciales internas de la tabla register_app
+                    username = "app-movile-001",
                     password = "Zsh4cvz4tvGyQa56P"
                 )
                 val appResponse = api.autenticateApp(appAuthRequest)
@@ -24,10 +24,9 @@ class LoginRepository(private val sessionManager: SessionManager) {
                     return@withContext Result.failure(Exception("Fallo en autenticación de aplicación"))
                 }
 
-                // Guardamos temporalmente el token de la app para que el Interceptor lo use en la siguiente petición
                 sessionManager.saveToken(appResponse.body()!!.data!!.key)
 
-                // FASE 2: Login de Usuario Final (Tabla Rol)
+                // FASE 2: Login de Usuario Final
                 val userRequest = UserLoginRequest(username = email, password = pass)
                 val userResponse = api.loginUser(userRequest)
 
@@ -35,13 +34,14 @@ class LoginRepository(private val sessionManager: SessionManager) {
                     val userToken = userResponse.body()!!.data!!.key
 
                     // FASE 3: Consultar Permisos (is_sys)
+                    // CORRECCIÓN: Se cambió 'ap1' por 'api' para coincidir con la variable declarada
                     val sysAdminResponse = api.checkIsSysAdmin(CheckSysAdminRequest(user = email))
                     val isSystemAdmin = sysAdminResponse.body()?.is_sys ?: false
 
                     // FASE 4: Persistencia Segura Final
                     val internalUid = email.hashCode()
                     sessionManager.saveSession(internalUid, email, isSystemAdmin)
-                    sessionManager.saveToken(userToken) // Guardamos el token definitivo del usuario
+                    sessionManager.saveToken(userToken)
 
                     Result.success(LoggedInUser(internalUid.toString(), email))
                 } else {
