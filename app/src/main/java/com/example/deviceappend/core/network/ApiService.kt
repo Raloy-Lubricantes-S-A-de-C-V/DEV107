@@ -4,31 +4,42 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.*
 
-// Modelos para Autenticación
 data class AuthAppRequest(val username: String, val password: String)
 data class UserLoginRequest(val username: String, val password: String)
 data class AuthResponse(val status: String, val data: AuthData?)
 data class AuthData(val key: String)
 
-// Modelos para Roles y Permisos
 data class CheckSysAdminRequest(val user: String)
 data class CheckSysAdminResponse(val is_sys: Boolean)
 
-// Modelos para Registro de Nuevo Técnico
+// CORRECCIÓN AQUÍ: Se mapea explícitamente el campo "user" que viene del backend
 data class UserListItem(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
-    @SerializedName("lider") val lider: Int
+    @SerializedName("user") val user: String?, // <-- Aquí capturamos el correo
+    @SerializedName("lider") val lider: Any?
 )
+
 data class UserListResponse(
     @SerializedName("error") val error: Boolean,
     @SerializedName("data") val data: List<UserListItem>
 )
+
 data class RegisterRequest(val name: String, val mail: String, val parent_id: Int, val code: Int)
 data class RegisterResponse(val error: Boolean, val id_request: Int? = null, val msj: String)
 
+data class UpdatePasswordRequest(val username: String, val hash: String)
+data class RecoveryEmailRequest(val email: String, val salt: String)
+
+data class NewTechnicianWebhookRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("mensaje") val mensaje: String
+)
+
 interface ApiService {
-    // CORRECCIÓN: Se eliminó "api/v1/" de las rutas porque ya está en la BASE_URL
+    @GET("check-connectivity")
+    suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
+
     @GET("users/list")
     suspend fun listUsers(): Response<UserListResponse>
 
@@ -52,4 +63,7 @@ interface ApiService {
 
     @POST("https://n8n.raloy.com.mx/webhook/kioskoti-recuperacion-contrase%C3%B1a")
     suspend fun sendRecoveryEmail(@Body request: RecoveryEmailRequest): Response<Unit>
+
+    @POST("https://n8n.raloy.com.mx/webhook/nuevo-tecnico")
+    suspend fun sendNewTechnicianWebhook(@Body request: NewTechnicianWebhookRequest): Response<Unit>
 }

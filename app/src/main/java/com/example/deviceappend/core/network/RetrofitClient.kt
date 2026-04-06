@@ -7,7 +7,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // IMPORTANTE: Terminar en / para que Retrofit concatene correctamente las rutas relativas
+    // URL BASE CORRECTA
     private const val BASE_URL = "https://apir.raloy.com.mx/kioskoit/api/v1/"
     private var retrofit: Retrofit? = null
 

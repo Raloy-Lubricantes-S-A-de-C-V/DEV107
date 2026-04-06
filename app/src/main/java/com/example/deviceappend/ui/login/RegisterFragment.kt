@@ -38,18 +38,16 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 val api = RetrofitClient.instance
                 val session = SessionManager(requireContext())
 
-                // PASO 1: Iniciar Sesión de App para obtener Token
                 val authRes = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
 
                 if (authRes.isSuccessful && authRes.body()?.data != null) {
                     session.saveToken(authRes.body()!!.data!!.key)
-                    Log.d("DEBUG_REGISTRO", "Token inyectado, llamando a users/list...")
                     cargarLideres()
                 } else {
-                    Log.e("DEBUG_REGISTRO", "Error 404: Verifica que el endpoint sea /api/v1/users/list")
+                    Log.e("DEBUG_REGISTRO", "Fallo Auth: ${authRes.code()}")
                 }
             } catch (e: Exception) {
-                Log.e("DEBUG_REGISTRO", "Excepción en flujo: ${e.message}")
+                Log.e("DEBUG_REGISTRO", "Excepción Auth: ${e.message}")
             }
         }
     }
@@ -59,39 +57,80 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             val response = RetrofitClient.instance.listUsers()
             if (response.isSuccessful && response.body()?.error == false) {
                 val allUsers = response.body()!!.data
-                leaderList = allUsers.filter { it.lider == 1 }
+
+                leaderList = allUsers.filter {
+                    val valLider = it.lider.toString().lowercase()
+                    valLider == "1" || valLider == "1.0" || valLider == "true"
+                }
 
                 val names = leaderList.map { it.name }
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, names)
                 binding.actvLeader.setAdapter(adapter)
+
                 binding.actvLeader.setText("", false)
             }
         } catch (e: Exception) {
-            Log.e("DEBUG_REGISTRO", "Error al procesar lista: ${e.message}")
+            Log.e("DEBUG_REGISTRO", "Error de red al listar: ${e.message}")
         }
     }
 
     private fun ejecutarRegistro() {
         val name = binding.etFullName.text.toString().trim()
         val mail = binding.etRegisterEmail.text.toString().trim()
-        val leaderName = binding.actvLeader.text.toString()
-        val leaderId = leaderList.find { it.name == leaderName }?.id ?: -1
+        val selectedLeaderName = binding.actvLeader.text.toString()
+
+        val leader = leaderList.find { it.name == selectedLeaderName }
+        val leaderId = leader?.id ?: -1
+
+        // CORRECCIÓN: Leemos exactamente el campo 'user' mapeado
+        val leaderEmail = leader?.user ?: ""
+
+        Log.d("DEBUG_REGISTRO", "--- DATOS DEL LÍDER ---")
+        Log.d("DEBUG_REGISTRO", "ID del Líder a enviar (parent_id): $leaderId")
+        Log.d("DEBUG_REGISTRO", "Correo del líder extraído: '$leaderEmail'")
 
         if (name.isEmpty() || mail.isEmpty() || leaderId == -1) {
-            Toast.makeText(context, "Complete todos los campos", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Complete todos los campos y seleccione un líder", Toast.LENGTH_SHORT).show()
             return
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                // 1. Enviamos el registro a la base de datos
                 val request = RegisterRequest(name, mail, leaderId, (1000..9999).random())
                 val response = RetrofitClient.instance.registerNewUser(request)
+
                 if (response.isSuccessful && response.body()?.error == false) {
+                    Log.d("DEBUG_REGISTRO", "Usuario registrado en BD correctamente. Intentando N8N...")
+
+                    // 2. Disparamos el Webhook de notificación a n8n
+                    try {
+                        if (leaderEmail.isNotEmpty()) {
+                            val mensaje = "Hola ${leader?.name},\n\nEl usuario $name con correo $mail ha intentado ingresar como nuevo técnico y te ha seleccionado como su líder.\n\nEs necesario que ingreses a la aplicación Raloy Asset Manager en el módulo de autorización para aceptar su cuenta."
+
+                            val webhookReq = NewTechnicianWebhookRequest(email = leaderEmail, mensaje = mensaje)
+                            val n8nResponse = RetrofitClient.instance.sendNewTechnicianWebhook(webhookReq)
+
+                            if (n8nResponse.isSuccessful) {
+                                Log.d("DEBUG_REGISTRO", "ÉXITO: N8N respondió con código ${n8nResponse.code()}")
+                            } else {
+                                Log.e("DEBUG_REGISTRO", "ERROR N8N: Código ${n8nResponse.code()} - Detalle: ${n8nResponse.errorBody()?.string()}")
+                            }
+                        } else {
+                            Log.e("DEBUG_REGISTRO", "OMITIDO N8N: El correo del líder sigue vacío.")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("DEBUG_REGISTRO", "CRASH al enviar webhook a n8n: ${e.message}")
+                    }
+
+                    // 3. Finalizamos y redirigimos al Login
                     Toast.makeText(context, "Solicitud enviada correctamente", Toast.LENGTH_LONG).show()
                     (activity as? MainActivity)?.replaceFragment(LoginFragment())
+                } else {
+                    Toast.makeText(context, "Fallo al enviar registro: ${response.body()?.msj}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Fallo de red", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error de red en el servidor de Kiosko", Toast.LENGTH_SHORT).show()
             }
         }
     }
