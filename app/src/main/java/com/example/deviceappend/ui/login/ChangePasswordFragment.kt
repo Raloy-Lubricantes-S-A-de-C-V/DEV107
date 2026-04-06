@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
+import com.example.deviceappend.core.network.AuthAppRequest
 import com.example.deviceappend.core.network.RetrofitClient
 import com.example.deviceappend.core.network.UpdatePasswordRequest
 import com.example.deviceappend.core.session.SessionManager
@@ -27,7 +28,11 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
             val pass2 = binding.etConfirmPassword.text.toString()
 
             if (pass1 == pass2 && pass1.isNotEmpty()) {
-                ejecutarCambioDeContrasena(pass1)
+                if (pass1.length >= 8) {
+                    ejecutarCambioDeContrasena(pass1)
+                } else {
+                    Toast.makeText(context, "La contraseña debe tener al menos 8 caracteres", Toast.LENGTH_SHORT).show()
+                }
             } else {
                 Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
             }
@@ -41,20 +46,36 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
         lifecycleScope.launch {
             try {
+                // PASO 1: Obtener el Hash seguro
                 val hashRes = api.getPasswordHash(nuevaClave)
                 val hashGenerado = hashRes.body()?.get("hash")
 
                 if (hashRes.isSuccessful && hashGenerado != null) {
-                    val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))
-                    if (updateRes.isSuccessful) {
-                        Toast.makeText(context, "Contraseña actualizada exitosamente", Toast.LENGTH_LONG).show()
-                        (activity as? MainActivity)?.logout()
+
+                    // PASO 2: Re-autenticar App para obtener token fresco antes del update
+                    val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+
+                    if (appAuth.isSuccessful && appAuth.body()?.data != null) {
+                        // Guardamos el nuevo token para que el AuthInterceptor lo use en la siguiente llamada
+                        session.saveToken(appAuth.body()!!.data!!.key)
+
+                        // PASO 3: Mandar el Hash obtenido al endpoint update-password
+                        val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))
+
+                        if (updateRes.isSuccessful) {
+                            Toast.makeText(context, "Contraseña actualizada. Inicie sesión.", Toast.LENGTH_LONG).show()
+                            (activity as? MainActivity)?.logout()
+                        } else {
+                            Toast.makeText(context, "Error al actualizar en servidor", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
-                        Toast.makeText(context, "Error al actualizar en servidor", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Fallo de autenticación de seguridad", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(context, "Error al generar hash", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Fallo de conexión: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

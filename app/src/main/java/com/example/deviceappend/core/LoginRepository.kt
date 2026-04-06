@@ -14,29 +14,19 @@ class LoginRepository(private val sessionManager: SessionManager) {
                 val api = RetrofitClient.instance
 
                 // FASE 1: Autenticación de la Aplicación
-                val appAuthRequest = AuthAppRequest(
-                    username = "app-movile-001",
-                    password = "Zsh4cvz4tvGyQa56P"
-                )
-                val appResponse = api.autenticateApp(appAuthRequest)
+                val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                if (!appAuth.isSuccessful) return@withContext Result.failure(Exception("Fallo App Auth"))
 
-                if (!appResponse.isSuccessful || appResponse.body()?.data == null) {
-                    return@withContext Result.failure(Exception("Fallo en autenticación de aplicación"))
-                }
-
-                sessionManager.saveToken(appResponse.body()!!.data!!.key)
+                sessionManager.saveToken(appAuth.body()?.data?.key ?: "")
 
                 // FASE 2: Login de Usuario Final
-                val userRequest = UserLoginRequest(username = email, password = pass)
-                val userResponse = api.loginUser(userRequest)
+                val userAuth = api.loginUser(UserLoginRequest(email, pass))
+                if (userAuth.isSuccessful && userAuth.body()?.data != null) {
+                    val userToken = userAuth.body()!!.data!!.key
 
-                if (userResponse.isSuccessful && userResponse.body()?.data != null) {
-                    val userToken = userResponse.body()!!.data!!.key
-
-                    // FASE 3: Consultar Permisos (is_sys)
-                    // CORRECCIÓN: Se cambió 'ap1' por 'api' para coincidir con la variable declarada
-                    val sysAdminResponse = api.checkIsSysAdmin(CheckSysAdminRequest(user = email))
-                    val isSystemAdmin = sysAdminResponse.body()?.is_sys ?: false
+                    // FASE 3: Consultar Permisos (is_sys) - ERROR CORREGIDO AQUÍ
+                    val sysAdminRes = api.checkIsSysAdmin(CheckSysAdminRequest(user = email))
+                    val isSystemAdmin = sysAdminRes.body()?.is_sys ?: false
 
                     // FASE 4: Persistencia Segura Final
                     val internalUid = email.hashCode()
@@ -45,9 +35,8 @@ class LoginRepository(private val sessionManager: SessionManager) {
 
                     Result.success(LoggedInUser(internalUid.toString(), email))
                 } else {
-                    Result.failure(Exception("Credenciales de usuario inválidas"))
+                    Result.failure(Exception("Credenciales inválidas"))
                 }
-
             } catch (e: Exception) {
                 Result.failure(e)
             }

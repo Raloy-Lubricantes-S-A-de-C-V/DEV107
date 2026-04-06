@@ -1,7 +1,9 @@
 package com.example.deviceappend.ui.login
 
+import android.content.Context
 import android.os.Bundle
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -25,10 +27,14 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentForgotPasswordBinding.bind(view)
-        setupMenu()
 
-        binding.btnSendEmail.setOnClickListener { sendEmailFlow() }
-        binding.btnResendEmail.setOnClickListener { sendEmailFlow() }
+        // Configura el menú de retorno
+        setupRecoveryMenu()
+
+        binding.btnSendEmail.setOnClickListener {
+            hideKeyboard()
+            sendEmailFlow()
+        }
 
         binding.btnVerifyCode.setOnClickListener {
             val input = binding.etVerificationCode.text.toString().trim()
@@ -40,6 +46,8 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
                 Toast.makeText(context, "Código incorrecto", Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.btnResendEmail.setOnClickListener { sendEmailFlow() }
     }
 
     private fun sendEmailFlow() {
@@ -50,29 +58,39 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
         }
         currentSalt = (10000..99999).random().toString()
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val res = RetrofitClient.instance.sendRecoveryEmail(RecoveryEmailRequest(email, currentSalt))
                 if (res.isSuccessful) {
                     binding.cardValidation.visibility = View.VISIBLE
-                    binding.btnSendEmail.visibility = View.GONE
+                    binding.btnSendEmail.isEnabled = false
                     Toast.makeText(context, "Código enviado exitosamente", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error de conexión con el servidor", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun setupMenu() {
+    private fun setupRecoveryMenu() {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_home)?.isVisible = true
+                // Ocultamos Home y Logout
+                menu.findItem(R.id.action_home)?.isVisible = false
+                menu.findItem(R.id.action_logout)?.isVisible = false
+                // Mostramos únicamente el retorno al Login
+                menu.findItem(R.id.action_back_to_login)?.isVisible = true
             }
+
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
+
+    private fun hideKeyboard() {
+        val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view?.windowToken, 0)
     }
 
     override fun onDestroyView() {

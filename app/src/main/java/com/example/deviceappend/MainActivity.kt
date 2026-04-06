@@ -40,12 +40,12 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_home -> {
-                // Limpia la pila y regresa al HomeFragment
                 supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                replaceFragment(com.example.deviceappend.ui.home.HomeFragment())
+                replaceFragment(HomeFragment())
                 true
             }
-            R.id.action_logout -> {
+            R.id.action_logout, R.id.action_back_to_login -> {
+                // Ambos llevan al Login, pero logout limpia la sesión
                 logout()
                 true
             }
