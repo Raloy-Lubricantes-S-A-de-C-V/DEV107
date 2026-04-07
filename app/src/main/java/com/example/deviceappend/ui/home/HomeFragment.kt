@@ -2,7 +2,6 @@ package com.example.deviceappend.ui.home
 
 import android.os.Bundle
 import android.view.*
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -12,7 +11,6 @@ import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.databinding.FragmentHomeBinding
-import com.example.deviceappend.ui.empresas.EmpresasFragment
 import com.example.deviceappend.ui.wizard.WizardFragment
 import com.example.deviceappend.utils.checkconnect
 
@@ -22,38 +20,27 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val binding get() = _binding!!
     private lateinit var sessionManager: SessionManager
 
-    // CORTAFUEGOS NIVEL 1
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        sessionManager = SessionManager(requireContext())
-        if (sessionManager.getToken().isNullOrEmpty()) {
-            (activity as? MainActivity)?.logout()
-            return FrameLayout(requireContext())
-        }
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (view is FrameLayout) return
+        // (Opcional) Si mantuviste el cortafuegos de FrameLayout del paso anterior
+        // if (view is android.widget.FrameLayout) return
 
         _binding = FragmentHomeBinding.bind(view)
+        sessionManager = SessionManager(requireContext())
 
-        // 1. Configuramos el menú ANTES de la verificación para que se dibuje de inmediato
+        // 1. Configuramos el menú de forma SÍNCRONA (fuera del checkconnect)
         setupMenu()
 
-        // 2. CORTAFUEGOS NIVEL 2: Verificación de servidor
+        // 2. CORRECCIÓN AQUÍ: Pasamos 'binding.root' para que el cortafuegos lo pueda ocultar
         checkconnect(binding.root) {
             setupUI()
         }
     }
 
     private fun setupUI() {
-        val rawName = sessionManager.getName()
-        val userName = if (!rawName.isNullOrBlank()) rawName else sessionManager.getUsername() ?: "Técnico"
+        // Obtenemos el nombre (name) del profile de la sesión en lugar del correo
+        val userName = sessionManager.getName() ?: "Usuario"
         binding.tvWelcome.text = "¡Bienvenido,\n$userName!"
         setupClickListeners()
     }
@@ -62,27 +49,22 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                // SOLUCIÓN: Limpiamos cualquier menú viejo (como el del Login)
+                // Limpiamos el caché del menú viejo (el del Login)
                 menu.clear()
 
                 menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_back_to_login)?.isVisible = false
-                menu.findItem(R.id.action_home)?.isVisible = false
 
-                // Forzamos a mostrar la Hamburguesa y el Logout
+                // Ocultamos los íconos que no deben ir en Home
+                menu.findItem(R.id.action_home)?.isVisible = false
+                menu.findItem(R.id.action_back_to_login)?.isVisible = false
+
+                // Forzamos a que SÍ aparezca la hamburguesa y el cerrar sesión
                 menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
-
-                // Mostrar opción de empresas solo si es SYS
-                menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
-                    R.id.action_empresas -> {
-                        (activity as? MainActivity)?.replaceFragment(EmpresasFragment(), true)
-                        true
-                    }
                     R.id.action_new_scanner -> {
                         (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
                         true
@@ -91,12 +73,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         Toast.makeText(context, "Módulo de Reportes en construcción", Toast.LENGTH_SHORT).show()
                         true
                     }
-                    else -> false
+                    else -> false // MainActivity maneja Logout
                 }
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        // SOLUCIÓN: Ordenarle a la barra superior que se actualice Inmediatamente
+        // Obligamos a la barra a redibujarse en ese preciso instante
         requireActivity().invalidateOptionsMenu()
     }
 
@@ -109,6 +91,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.btnPRTG.setOnClickListener(enrolarListener)
         binding.btnProtection.setOnClickListener(enrolarListener)
 
+        // Acción para el nuevo botón en la tarjeta del escáner
         binding.btnScanner.setOnClickListener {
             (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
         }
