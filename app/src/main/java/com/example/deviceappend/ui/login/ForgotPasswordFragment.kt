@@ -28,7 +28,6 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentForgotPasswordBinding.bind(view)
 
-        // Configura el menú de retorno
         setupRecoveryMenu()
 
         binding.btnSendEmail.setOnClickListener {
@@ -40,7 +39,7 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
             val input = binding.etVerificationCode.text.toString().trim()
             if (input == currentSalt && input.isNotEmpty()) {
                 val session = SessionManager(requireContext())
-                session.saveSession(0, binding.etRecoveryEmail.text.toString().trim(), false)
+                session.saveUsername(binding.etRecoveryEmail.text.toString().trim())
                 (activity as? MainActivity)?.replaceFragment(ChangePasswordFragment(), true)
             } else {
                 Toast.makeText(context, "Código incorrecto", Toast.LENGTH_SHORT).show()
@@ -77,13 +76,12 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
-                // Ocultamos Home y Logout
                 menu.findItem(R.id.action_home)?.isVisible = false
                 menu.findItem(R.id.action_logout)?.isVisible = false
-                // Mostramos únicamente el retorno al Login
+                // OCULTAMOS LA HAMBURGUESA EN RECUPERACIÓN DE CONTRASEÑA
+                menu.findItem(R.id.action_modules)?.isVisible = false
                 menu.findItem(R.id.action_back_to_login)?.isVisible = true
             }
-
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }

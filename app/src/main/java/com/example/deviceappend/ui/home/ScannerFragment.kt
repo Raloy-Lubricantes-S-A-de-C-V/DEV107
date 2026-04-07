@@ -18,12 +18,10 @@ class ScannerFragment : Fragment(R.layout.fragment_scanner) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Configura el menú para regresar
-        setupMenu()
-
-        // Protege el fragmento con checkconnect()
-        checkconnect {
-            // Lógica de cámara irá aquí.
+        // CORTAFUEGOS
+        checkconnect(view) {
+            setupMenu()
+            // Lógica de cámara irá aquí
         }
     }
 
@@ -32,8 +30,10 @@ class ScannerFragment : Fragment(R.layout.fragment_scanner) {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
-                // En Scanner sí mostramos Home
+                menu.findItem(R.id.action_back_to_login)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = true
+                menu.findItem(R.id.action_modules)?.isVisible = true
+                menu.findItem(R.id.action_logout)?.isVisible = true
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {

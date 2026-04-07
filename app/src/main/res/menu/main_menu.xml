@@ -17,8 +17,10 @@
     <item
         android:id="@+id/action_modules"
         android:title="Módulos"
+        android:icon="@drawable/ic_menu"
         app:showAsAction="always">
         <menu>
+            <item android:id="@+id/action_empresas" android:title="Creación de empresas" />
             <item android:id="@+id/action_new_scanner" android:title="Escanear Etiqueta" />
             <item android:id="@+id/action_new_metrics" android:title="Métricas Avanzadas" />
         </menu>

@@ -37,7 +37,12 @@ class SessionManager(context: Context) {
 
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
 
-    // GUARDAMOS EL PERFIL COMPLETO
+    // NUEVO: Función para guardar solo el correo temporalmente en el flujo de recuperación
+    fun saveUsername(username: String) {
+        prefs.edit().putString(KEY_USERNAME, username).apply()
+    }
+
+    // GUARDAMOS EL PERFIL COMPLETO DESDE EL LOGIN
     fun saveUserProfile(profile: UserProfile) {
         prefs.edit().apply {
             putInt(KEY_USER_ID, profile.id)
@@ -53,7 +58,6 @@ class SessionManager(context: Context) {
 
     fun getUid(): Int = prefs.getInt(KEY_USER_ID, -1)
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
-    // Obtenemos el "name" real del usuario
     fun getName(): String? = prefs.getString(KEY_NAME, null)
 
     fun isSys(): Boolean = prefs.getInt(KEY_SYS, 0) == 1

@@ -11,24 +11,24 @@ import com.example.deviceappend.core.network.RetrofitClient
 import com.example.deviceappend.core.session.SessionManager
 import kotlinx.coroutines.*
 
-/**
- * Verifica la sesión local y la conexión a la API (3 intentos).
- * Si algo falla, mata la sesión y redirige al login.
- */
 fun Fragment.checkconnect(
-    mensaje: String = "Validando conexión...",
+    rootView: View,
+    mensaje: String = "Validando seguridad...",
     onSuccess: suspend CoroutineScope.() -> Unit
 ) {
+    // 1. CORTAFUEGOS INMEDIATO: Ocultar la vista principal
+    rootView.visibility = View.INVISIBLE
+
     val sessionManager = SessionManager(requireContext())
 
-    // 1. Verificar si existe una sesión válida localmente
+    // 2. Verificación SÍNCRONA del token
     if (sessionManager.getToken().isNullOrEmpty()) {
-        Log.e("CheckConnect", "No hay sesión activa. Redirigiendo a Login.")
+        Log.e("SecurityCheck", "Acceso denegado: No hay sesión. Rompiendo caché.")
         (activity as? MainActivity)?.logout()
-        return
+        return // Abortar ejecución
     }
 
-    // 2. Preparar la pantalla de carga (Overlay)
+    // 3. Mostramos el LOADER DE PANTALLA COMPLETA
     val overlay = activity?.findViewById<View>(R.id.overlayLoading)
     val tvTitle = activity?.findViewById<TextView>(R.id.tvLoadingTitle)
 
@@ -40,7 +40,7 @@ fun Fragment.checkconnect(
         val api = RetrofitClient.instance
 
         withContext(Dispatchers.IO) {
-            // 3. Validar conexión con el API Raloy (Máximo 3 intentos)
+            // Validación de conexión (3 intentos)
             for (intento in 1..3) {
                 try {
                     val response = api.checkDatabaseConnectivity()
@@ -49,22 +49,22 @@ fun Fragment.checkconnect(
                         break
                     }
                 } catch (e: Exception) {
-                    Log.e("CheckConnect", "Intento de conexión $intento fallido")
+                    Log.e("SecurityCheck", "Intento $intento al API fallido: ${e.message}")
                 }
-                // Si no es el último intento, esperar 1.5 segundos antes de reintentar
                 if (intento < 3) delay(1500)
             }
         }
 
-        // 4. Ocultar pantalla de carga
+        // Ocultar Loader
         overlay?.visibility = View.GONE
 
-        // 5. Decidir qué hacer
         if (conectado) {
-            onSuccess() // Mostrar el fragmento normalmente
+            // Revelamos la vista solo si todo está OK
+            rootView.visibility = View.VISIBLE
+            onSuccess()
         } else {
-            Log.e("CheckConnect", "Conexión fallida tras 3 intentos. Matando sesión.")
-            (activity as? MainActivity)?.logout() // Mata sesión y va a Login
+            Log.e("SecurityCheck", "Fallo de conexión al API. Abortando y limpiando sesión.")
+            (activity as? MainActivity)?.logout()
         }
     }
 }

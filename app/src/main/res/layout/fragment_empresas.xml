@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Empresas de Sistema"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#D3D3D3"
+            app:cardBackgroundColor="@android:color/white"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Clave (Ej. 001)" android:layout_marginEnd="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCveEmpresa" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="RFC" android:layout_marginStart="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etRfc" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:hint="Descripción / Razón Social">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etDescripcio" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal" android:baselineAligned="false">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="2" android:layout_height="wrap_content" android:hint="Calle" android:layout_marginEnd="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCalle" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="No. Ext/Int" android:layout_marginStart="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etNoExtInt" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal" android:baselineAligned="false">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="2" android:layout_height="wrap_content" android:hint="Colonia" android:layout_marginEnd="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etColonia" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="C.P." android:layout_marginStart="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCodPostal" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal" android:baselineAligned="false">
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Población/Mpio" android:layout_marginEnd="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etPoblacion" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout style="@style/Widget.Material3.TextInputLayout.OutlinedBox" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Cve Entidad (Ej. MEX)" android:layout_marginStart="8dp">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etCveEntFed" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSubmitEmpresa"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="20dp"
+                    android:text="CREAR EMPRESA"
+                    app:cornerRadius="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancelEdit"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Cancelar Edición"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Listado de Empresas"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvEmpresas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

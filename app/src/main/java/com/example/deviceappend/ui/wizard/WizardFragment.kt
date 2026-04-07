@@ -10,7 +10,7 @@ import androidx.lifecycle.Lifecycle
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 import com.example.deviceappend.databinding.FragmentWizardBinding
-import com.example.deviceappend.utils.checkconnect // Importar checkconnect
+import com.example.deviceappend.utils.checkconnect
 
 class WizardFragment : Fragment(R.layout.fragment_wizard) {
 
@@ -22,18 +22,16 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentWizardBinding.bind(view)
 
-        // 1. Registro del Menú
-        setupMenu()
-
-        // 2. Verificación de conexión y sesión obligatoria al iniciar
-        checkconnect("Preparando validación...") {
+        // CORTAFUEGOS
+        checkconnect(binding.root, "Preparando enrolamiento...") {
+            setupMenu()
             setupUI()
         }
     }
 
     private fun setupUI() {
         binding.btnNext.setOnClickListener {
-            // Lógica para avanzar en los pasos del Wizard
+            // Lógica
         }
     }
 
@@ -42,7 +40,10 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
+                menu.findItem(R.id.action_back_to_login)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = true
+                menu.findItem(R.id.action_modules)?.isVisible = true
+                menu.findItem(R.id.action_logout)?.isVisible = true
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {

@@ -41,11 +41,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 val authRes = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
 
                 if (authRes.isSuccessful && authRes.body()?.data != null) {
-
-                    // CORRECCIÓN: Manejo seguro de nulos
                     val token = authRes.body()?.data?.key ?: ""
                     session.saveToken(token)
-
                     cargarLideres()
                 } else {
                     Log.e("DEBUG_REGISTRO", "Fallo Auth: ${authRes.code()}")
@@ -85,7 +82,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
         val leader = leaderList.find { it.name == selectedLeaderName }
         val leaderId = leader?.id ?: -1
-
         val leaderEmail = leader?.user ?: ""
 
         if (name.isEmpty() || mail.isEmpty() || leaderId == -1) {
@@ -95,13 +91,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // 1. Enviamos el registro a la base de datos
                 val request = RegisterRequest(name, mail, leaderId, (1000..9999).random())
                 val response = RetrofitClient.instance.registerNewUser(request)
 
                 if (response.isSuccessful && response.body()?.error == false) {
-
-                    // 2. Disparamos el Webhook de notificación a n8n
                     try {
                         if (leaderEmail.isNotEmpty()) {
                             val mensaje = "Hola ${leader?.name},\n\nEl usuario $name con correo $mail ha intentado ingresar como nuevo técnico y te ha seleccionado como su líder.\n\nEs necesario que ingreses a la aplicación Raloy Asset Manager en el módulo de autorización para aceptar su cuenta."
@@ -113,14 +106,13 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                         Log.e("DEBUG_REGISTRO", "CRASH al enviar webhook a n8n: ${e.message}")
                     }
 
-                    // 3. Finalizamos y redirigimos al Login
                     Toast.makeText(context, "Solicitud enviada correctamente", Toast.LENGTH_LONG).show()
                     (activity as? MainActivity)?.replaceFragment(LoginFragment())
                 } else {
                     Toast.makeText(context, "Fallo al enviar registro: ${response.body()?.msj}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Error de red en el servidor", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error de red en el servidor de Kiosko", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -132,6 +124,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 menuInflater.inflate(R.menu.main_menu, menu)
                 menu.findItem(R.id.action_home)?.isVisible = false
                 menu.findItem(R.id.action_logout)?.isVisible = false
+                // OCULTAMOS LA HAMBURGUESA EN REGISTRO
+                menu.findItem(R.id.action_modules)?.isVisible = false
                 menu.findItem(R.id.action_back_to_login)?.isVisible = true
             }
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false

@@ -7,18 +7,16 @@ import retrofit2.http.*
 data class AuthAppRequest(val username: String, val password: String)
 data class UserLoginRequest(val username: String, val password: String)
 
-// 1. NUEVA ESTRUCTURA DEL PERFIL DE USUARIO
 data class UserProfile(
-    @SerializedName("id") val id: Int,
-    @SerializedName("user") val user: String,
-    @SerializedName("name") val name: String,
-    @SerializedName("lider") val lider: Int,
-    @SerializedName("sys") val sys: Int,
-    @SerializedName("admin") val admin: Int,
-    @SerializedName("normal") val normal: Int
+    @SerializedName("id") val id: Int?,
+    @SerializedName("user") val user: String?,
+    @SerializedName("name") val name: String?,
+    @SerializedName("lider") val lider: Int?,
+    @SerializedName("sys") val sys: Int?,
+    @SerializedName("admin") val admin: Int?,
+    @SerializedName("normal") val normal: Int?
 )
 
-// 2. NUEVA ESTRUCTURA DE LA RESPUESTA DE LOGIN
 data class AuthData(
     @SerializedName("error") val error: Boolean?,
     @SerializedName("msj") val msj: String?,
@@ -55,6 +53,45 @@ data class NewTechnicianWebhookRequest(
     @SerializedName("asunto") val asunto: String? = null
 )
 
+// ==========================================
+// NUEVOS MODELOS PARA EMPRESAS
+// ==========================================
+data class Empresa(
+    @SerializedName("id") val id: Int,
+    @SerializedName("cveempresa") val cveempresa: String?,
+    @SerializedName("descripcio") val descripcio: String?,
+    @SerializedName("calle") val calle: String?,
+    @SerializedName("noextint") val noextint: String?,
+    @SerializedName("colonia") val colonia: String?,
+    @SerializedName("codpostal") val codpostal: Double?, // Viene como 54000.0
+    @SerializedName("poblacion") val poblacion: String?,
+    @SerializedName("cveentfed") val cveentfed: String?,
+    @SerializedName("rfc") val rfc: String?
+)
+
+data class EmpresaListResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<Empresa>
+)
+
+data class EmpresaRequest(
+    val cveempresa: String,
+    val descripcio: String,
+    val calle: String,
+    val noextint: String,
+    val colonia: String,
+    val codpostal: Int, // Se envía como Int (ej. 55000)
+    val poblacion: String,
+    val cveentfed: String,
+    val rfc: String
+)
+
+data class EmpresaResponse(
+    val error: Boolean,
+    val id: Int? = null,
+    val msj: String? = null
+)
+
 interface ApiService {
     @GET("check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
@@ -85,4 +122,16 @@ interface ApiService {
 
     @POST("https://n8n.raloy.com.mx/webhook/nuevo-tecnico")
     suspend fun sendNewTechnicianWebhook(@Body request: NewTechnicianWebhookRequest): Response<Unit>
+
+    // ==========================================
+    // NUEVOS ENDPOINTS EMPRESAS
+    // ==========================================
+    @GET("empresas")
+    suspend fun getEmpresas(): Response<EmpresaListResponse>
+
+    @POST("empresas")
+    suspend fun createEmpresa(@Body request: EmpresaRequest): Response<EmpresaResponse>
+
+    @PUT("empresas/{id}")
+    suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
 }
