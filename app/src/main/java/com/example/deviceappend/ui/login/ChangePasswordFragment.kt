@@ -56,8 +56,10 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
                     val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
 
                     if (appAuth.isSuccessful && appAuth.body()?.data != null) {
-                        // Guardamos el nuevo token para que el AuthInterceptor lo use en la siguiente llamada
-                        session.saveToken(appAuth.body()!!.data!!.key)
+
+                        // CORRECCIÓN: Manejo seguro de nulos
+                        val tokenFresco = appAuth.body()?.data?.key ?: ""
+                        session.saveToken(tokenFresco)
 
                         // PASO 3: Mandar el Hash obtenido al endpoint update-password
                         val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))

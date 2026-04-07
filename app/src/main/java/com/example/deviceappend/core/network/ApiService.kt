@@ -6,17 +6,35 @@ import retrofit2.http.*
 
 data class AuthAppRequest(val username: String, val password: String)
 data class UserLoginRequest(val username: String, val password: String)
-data class AuthResponse(val status: String, val data: AuthData?)
-data class AuthData(val key: String)
+
+// 1. NUEVA ESTRUCTURA DEL PERFIL DE USUARIO
+data class UserProfile(
+    @SerializedName("id") val id: Int,
+    @SerializedName("user") val user: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("lider") val lider: Int,
+    @SerializedName("sys") val sys: Int,
+    @SerializedName("admin") val admin: Int,
+    @SerializedName("normal") val normal: Int
+)
+
+// 2. NUEVA ESTRUCTURA DE LA RESPUESTA DE LOGIN
+data class AuthData(
+    @SerializedName("error") val error: Boolean?,
+    @SerializedName("msj") val msj: String?,
+    @SerializedName("key") val key: String?,
+    @SerializedName("profile") val profile: UserProfile?
+)
+
+data class AuthResponse(val status: Int, val data: AuthData?)
 
 data class CheckSysAdminRequest(val user: String)
 data class CheckSysAdminResponse(val is_sys: Boolean)
 
-// CORRECCIÓN AQUÍ: Se mapea explícitamente el campo "user" que viene del backend
 data class UserListItem(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
-    @SerializedName("user") val user: String?, // <-- Aquí capturamos el correo
+    @SerializedName("user") val user: String?,
     @SerializedName("lider") val lider: Any?
 )
 
@@ -33,7 +51,8 @@ data class RecoveryEmailRequest(val email: String, val salt: String)
 
 data class NewTechnicianWebhookRequest(
     @SerializedName("email") val email: String,
-    @SerializedName("mensaje") val mensaje: String
+    @SerializedName("mensaje") val mensaje: String,
+    @SerializedName("asunto") val asunto: String? = null
 )
 
 interface ApiService {

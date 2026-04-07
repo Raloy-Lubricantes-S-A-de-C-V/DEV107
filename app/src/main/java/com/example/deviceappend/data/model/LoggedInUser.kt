@@ -5,5 +5,6 @@ package com.example.deviceappend.data.model
  */
 data class LoggedInUser(
     val userId: String,
-    val displayName: String
+    val displayName: String,
+    val message: String = "Login exitoso" // Mensaje dinámico del API
 )

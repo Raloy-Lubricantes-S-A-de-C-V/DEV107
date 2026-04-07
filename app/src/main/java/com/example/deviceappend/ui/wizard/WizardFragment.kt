@@ -10,7 +10,7 @@ import androidx.lifecycle.Lifecycle
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 import com.example.deviceappend.databinding.FragmentWizardBinding
-import com.example.deviceappend.utils.verificarConexionYEjecutar
+import com.example.deviceappend.utils.checkconnect // Importar checkconnect
 
 class WizardFragment : Fragment(R.layout.fragment_wizard) {
 
@@ -22,11 +22,11 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentWizardBinding.bind(view)
 
-        // 1. Registro del Menú (Para ver el botón Home)
+        // 1. Registro del Menú
         setupMenu()
 
-        // 2. Verificación de conexión obligatoria al iniciar el Wizard
-        verificarConexionYEjecutar("Preparando validación...") {
+        // 2. Verificación de conexión y sesión obligatoria al iniciar
+        checkconnect("Preparando validación...") {
             setupUI()
         }
     }
@@ -42,12 +42,10 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
-                // Aquí NO ocultamos action_home, para que sea visible
                 menu.findItem(R.id.action_home)?.isVisible = true
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                // La acción la maneja MainActivity.kt
                 return false
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)

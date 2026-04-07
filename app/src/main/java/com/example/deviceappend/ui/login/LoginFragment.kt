@@ -49,6 +49,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         setupObservers()
     }
 
+    // Asegúrate de modificar SOLO esta función dentro de LoginFragment.kt
     private fun setupObservers() {
         viewModel.loginState.observe(viewLifecycleOwner) { state ->
             when (state) {
@@ -58,6 +59,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 }
                 is LoginState.Success -> {
                     binding.progressBar.visibility = View.GONE
+                    // CAMBIO: Mostramos el mensaje que viene del backend
+                    Toast.makeText(context, state.user.message, Toast.LENGTH_LONG).show()
                     (activity as? MainActivity)?.replaceFragment(HomeFragment())
                 }
                 is LoginState.Error -> {

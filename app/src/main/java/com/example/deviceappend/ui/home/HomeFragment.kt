@@ -2,6 +2,7 @@ package com.example.deviceappend.ui.home
 
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -11,7 +12,7 @@ import com.example.deviceappend.R
 import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.databinding.FragmentHomeBinding
 import com.example.deviceappend.ui.wizard.WizardFragment
-import com.example.deviceappend.utils.verificarConexionYEjecutar
+import com.example.deviceappend.utils.checkconnect
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
@@ -24,15 +25,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         _binding = FragmentHomeBinding.bind(view)
         sessionManager = SessionManager(requireContext())
 
-        verificarConexionYEjecutar {
+        // Usando la lógica que verificamos anteriormente
+        checkconnect {
             setupUI()
             setupMenu()
         }
     }
 
     private fun setupUI() {
-        val user = sessionManager.getUsername() ?: "Técnico"
-        binding.tvWelcome.text = "¡Bienvenido, $user!"
+        // Obtenemos el nombre (name) del profile de la sesión en lugar del correo
+        val userName = sessionManager.getName() ?: "Usuario"
+        binding.tvWelcome.text = "¡Bienvenido,\n$userName!"
         setupClickListeners()
     }
 
@@ -41,24 +44,38 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
-                // OCULTAR el botón Home cuando ya estamos en el fragmento Home
                 menu.findItem(R.id.action_home)?.isVisible = false
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return false // La MainActivity maneja las acciones del menú
+                return when (menuItem.itemId) {
+                    R.id.action_new_scanner -> {
+                        (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
+                        true
+                    }
+                    R.id.action_new_metrics -> {
+                        Toast.makeText(context, "Módulo de Reportes en construcción", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    else -> false // MainActivity maneja Logout
+                }
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     private fun setupClickListeners() {
-        val clickListener = View.OnClickListener {
+        val enrolarListener = View.OnClickListener {
             (activity as? MainActivity)?.replaceFragment(WizardFragment(), true)
         }
-        binding.btnHelpDesk.setOnClickListener(clickListener)
-        binding.btnInventi.setOnClickListener(clickListener)
-        binding.btnPRTG.setOnClickListener(clickListener)
-        binding.btnProtection.setOnClickListener(clickListener)
+        binding.btnHelpDesk.setOnClickListener(enrolarListener)
+        binding.btnInventi.setOnClickListener(enrolarListener)
+        binding.btnPRTG.setOnClickListener(enrolarListener)
+        binding.btnProtection.setOnClickListener(enrolarListener)
+
+        // Acción para el nuevo botón en la tarjeta del escáner
+        binding.btnScanner.setOnClickListener {
+            (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
+        }
     }
 
     override fun onDestroyView() {

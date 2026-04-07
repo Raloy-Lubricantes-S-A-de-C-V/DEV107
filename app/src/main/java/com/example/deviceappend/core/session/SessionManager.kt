@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.example.deviceappend.core.network.UserProfile
 
 class SessionManager(context: Context) {
 
@@ -23,38 +24,43 @@ class SessionManager(context: Context) {
         private const val KEY_TOKEN = "auth_token"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USERNAME = "username"
-        private const val KEY_IS_SUPER_ADMIN = "is_super_admin"
+        private const val KEY_NAME = "name"
+        private const val KEY_LIDER = "lider"
+        private const val KEY_SYS = "sys"
+        private const val KEY_ADMIN = "admin"
+        private const val KEY_NORMAL = "normal"
     }
 
-    /**
-     * Guarda el Bearer Token obtenido de la API de Raloy.
-     */
     fun saveToken(token: String) {
         prefs.edit().putString(KEY_TOKEN, token).apply()
     }
 
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
 
-    /**
-     * Registra la sesión del técnico tras validar en Odoo/DelSIP.
-     */
-    fun saveSession(uid: Int, username: String, isSuperAdmin: Boolean = false) {
+    // GUARDAMOS EL PERFIL COMPLETO
+    fun saveUserProfile(profile: UserProfile) {
         prefs.edit().apply {
-            putInt(KEY_USER_ID, uid)
-            putString(KEY_USERNAME, username)
-            putBoolean(KEY_IS_SUPER_ADMIN, isSuperAdmin)
+            putInt(KEY_USER_ID, profile.id)
+            putString(KEY_USERNAME, profile.user)
+            putString(KEY_NAME, profile.name)
+            putInt(KEY_LIDER, profile.lider)
+            putInt(KEY_SYS, profile.sys)
+            putInt(KEY_ADMIN, profile.admin)
+            putInt(KEY_NORMAL, profile.normal)
             apply()
         }
     }
 
     fun getUid(): Int = prefs.getInt(KEY_USER_ID, -1)
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
-    fun isSuperAdmin(): Boolean = prefs.getBoolean(KEY_IS_SUPER_ADMIN, false)
+    // Obtenemos el "name" real del usuario
+    fun getName(): String? = prefs.getString(KEY_NAME, null)
 
-    /**
-     * Limpia la sesión (Logout). Utilizado por MainActivity y AuthInterceptor
-     * si el token expira (401).
-     */
+    fun isSys(): Boolean = prefs.getInt(KEY_SYS, 0) == 1
+    fun isLider(): Boolean = prefs.getInt(KEY_LIDER, 0) == 1
+    fun isAdmin(): Boolean = prefs.getInt(KEY_ADMIN, 0) == 1
+    fun isNormal(): Boolean = prefs.getInt(KEY_NORMAL, 0) == 1
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }

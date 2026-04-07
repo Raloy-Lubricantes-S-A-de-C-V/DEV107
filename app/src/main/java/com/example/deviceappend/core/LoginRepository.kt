@@ -13,28 +13,30 @@ class LoginRepository(private val sessionManager: SessionManager) {
             try {
                 val api = RetrofitClient.instance
 
-                // FASE 1: Autenticación de la Aplicación
+                // 1. Autenticación de la Aplicación
                 val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
                 if (!appAuth.isSuccessful) return@withContext Result.failure(Exception("Fallo App Auth"))
                 sessionManager.saveToken(appAuth.body()?.data?.key ?: "")
 
-                // FASE 2: Login de Usuario Final
+                // 2. Login de Usuario Final con el nuevo JSON
                 val userAuth = api.loginUser(UserLoginRequest(email, pass))
-                if (userAuth.isSuccessful && userAuth.body()?.data != null) {
-                    val userToken = userAuth.body()!!.data!!.key
+                val authData = userAuth.body()?.data
 
-                    // FASE 3: Consultar Permisos (Error corregido: api en lugar de ap1)
-                    val sysAdminRes = api.checkIsSysAdmin(CheckSysAdminRequest(user = email))
-                    val isSystemAdmin = sysAdminRes.body()?.is_sys ?: false
+                if (userAuth.isSuccessful && authData != null && authData.error == false) {
+                    val userToken = authData.key ?: ""
+                    val profile = authData.profile
+                    val msj = authData.msj ?: "Sesión iniciada correctamente"
 
-                    // FASE 4: Persistencia
-                    val internalUid = email.hashCode()
-                    sessionManager.saveSession(internalUid, email, isSystemAdmin)
+                    // 3. Guardamos el perfil si existe
+                    if (profile != null) {
+                        sessionManager.saveUserProfile(profile)
+                    }
                     sessionManager.saveToken(userToken)
 
-                    Result.success(LoggedInUser(internalUid.toString(), email))
+                    // 4. Retornamos éxito con el mensaje extraído del backend
+                    Result.success(LoggedInUser(profile?.id?.toString() ?: "", profile?.name ?: email, msj))
                 } else {
-                    Result.failure(Exception("Credenciales inválidas"))
+                    Result.failure(Exception(authData?.msj ?: "Credenciales inválidas"))
                 }
             } catch (e: Exception) {
                 Result.failure(e)
