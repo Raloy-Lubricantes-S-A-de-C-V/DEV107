@@ -33,7 +33,7 @@ data class UserListItem(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("user") val user: String?,
-    @SerializedName("lider") val lider: Any?
+    @SerializedName("lider") val lider: Int // Cambiado a Int para coincidir con la causa raíz (1/0)
 )
 
 data class UserListResponse(
@@ -102,9 +102,7 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    // ==========================================
-    // CORRECCIÓN AQUÍ: "authenticate" con 'H' o "autenticate/" si Flask pide slash
-    // ==========================================
+    // SE ELIMINÓ PREFIJO /api/v1/ Y SE CORRIGIÓ A "authenticate" (CON H)
     @POST("authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
@@ -120,6 +118,7 @@ interface ApiService {
     @POST("update-password")
     suspend fun updatePassword(@Body request: UpdatePasswordRequest): Response<Map<String, Any>>
 
+    // Endpoints Externos (Webhook n8n)
     @POST("https://n8n.raloy.com.mx/webhook/kioskoti-recuperacion-contrase%C3%B1a")
     suspend fun sendRecoveryEmail(@Body request: RecoveryEmailRequest): Response<Unit>
 
