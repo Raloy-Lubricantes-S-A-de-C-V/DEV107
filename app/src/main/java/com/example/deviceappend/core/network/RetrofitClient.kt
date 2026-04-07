@@ -7,13 +7,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // URL BASE CORRECTA
+    // ÚNICA URL BASE ACTIVA Y ESTRICTA (Debe terminar en "/")
     private const val BASE_URL = "https://apir.raloy.com.mx/kioskoit/api/v1/"
     private var retrofit: Retrofit? = null
 
     fun init(context: Context) {
         if (retrofit == null) {
             val okHttpClient = OkHttpClient.Builder()
+                // Interceptor que inyecta el token Bearer automáticamente
                 .addInterceptor(AuthInterceptor(context))
                 .build()
 

@@ -8,7 +8,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -23,6 +22,7 @@ import com.example.deviceappend.core.network.Empresa
 import com.example.deviceappend.core.network.EmpresaRequest
 import com.example.deviceappend.core.network.RetrofitClient
 import com.example.deviceappend.core.session.SessionManager
+import com.example.deviceappend.ui.home.ScannerFragment
 import com.example.deviceappend.utils.checkconnect
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -47,35 +47,27 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
     private lateinit var btnSubmit: MaterialButton
     private lateinit var btnCancel: MaterialButton
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        sessionManager = SessionManager(requireContext())
-
-        // CORTAFUEGOS 1: Debe tener sesión activa
-        if (sessionManager.getToken().isNullOrEmpty()) {
-            (activity as? MainActivity)?.logout()
-            return FrameLayout(requireContext())
-        }
-
-        // CORTAFUEGOS 2: Seguridad Extrema. Solo el "sys" puede entrar aquí.
-        if (!sessionManager.isSys()) {
-            Toast.makeText(context, "Acceso denegado: No eres SYS", Toast.LENGTH_LONG).show()
-            (activity as? MainActivity)?.supportFragmentManager?.popBackStack()
-            return FrameLayout(requireContext())
-        }
-
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (view is FrameLayout) return
 
+        sessionManager = SessionManager(requireContext())
+
+        if (sessionManager.getToken().isNullOrEmpty()) {
+            view.visibility = View.GONE
+            (activity as? MainActivity)?.logout()
+            return
+        }
+
+        if (!sessionManager.isSys()) {
+            view.visibility = View.GONE
+            Toast.makeText(context, "Acceso denegado: No tienes permisos de sistema", Toast.LENGTH_LONG).show()
+            (activity as? MainActivity)?.supportFragmentManager?.popBackStack()
+            return
+        }
+
+        setupMenu()
         bindViews(view)
         setupRecyclerView(view)
-        setupMenu()
 
         checkconnect(view) {
             loadEmpresas()
@@ -113,10 +105,12 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
                 if (res.isSuccessful && res.body()?.error == false) {
                     adapter.updateData(res.body()!!.data)
                 } else {
-                    Toast.makeText(context, "Error cargando empresas", Toast.LENGTH_SHORT).show()
+                    val errorMsg = "Error ${res.code()}: ${res.errorBody()?.string() ?: "Desconocido"}"
+                    Log.e("Empresas", errorMsg)
+                    Toast.makeText(context, "Fallo al listar: Error ${res.code()}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Log.e("Empresas", "Fallo al listar: ${e.message}")
+                Log.e("Empresas", "Excepción de red: ${e.message}")
             }
         }
     }
@@ -136,7 +130,10 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
                             clearForm()
                             loadEmpresas()
                         } else {
-                            Toast.makeText(context, "Fallo al crear", Toast.LENGTH_SHORT).show()
+                            // EXTRAE EL MENSAJE DE ERROR REAL DEL SERVIDOR PARA DEPUBGING
+                            val errorMsg = res.errorBody()?.string() ?: res.body()?.id?.toString() ?: "Error desconocido"
+                            Log.e("Empresas", "Backend rechazó el POST: $errorMsg")
+                            Toast.makeText(context, "Rechazado (400): $errorMsg", Toast.LENGTH_LONG).show()
                         }
                     } else {
                         // UPDATE
@@ -146,11 +143,14 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
                             clearForm()
                             loadEmpresas()
                         } else {
-                            Toast.makeText(context, "Fallo al actualizar", Toast.LENGTH_SHORT).show()
+                            // EXTRAE EL MENSAJE DE ERROR REAL DEL SERVIDOR PARA DEPUBGING
+                            val errorMsg = res.errorBody()?.string() ?: res.body()?.msj ?: "Error desconocido"
+                            Log.e("Empresas", "Backend rechazó el PUT: $errorMsg")
+                            Toast.makeText(context, "Rechazado (400): $errorMsg", Toast.LENGTH_LONG).show()
                         }
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Fallo de red", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Fallo de red: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -163,7 +163,6 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
     private fun populateForm(empresa: Empresa) {
         editingEmpresaId = empresa.id
 
-        // TRIMMING THE STRINGS FROM BACKEND!
         etCve.setText(empresa.cveempresa?.trim() ?: "")
         etRfc.setText(empresa.rfc?.trim() ?: "")
         etDesc.setText(empresa.descripcio?.trim() ?: "")
@@ -222,14 +221,32 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
+
                 menu.findItem(R.id.action_back_to_login)?.isVisible = false
+                menu.findItem(R.id.action_empresas)?.isVisible = false
+
                 menu.findItem(R.id.action_home)?.isVisible = true
                 menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
-                menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
             }
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_new_scanner -> {
+                        (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
+                        true
+                    }
+                    R.id.action_new_metrics -> {
+                        Toast.makeText(context, "Módulo de Reportes en construcción", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    else -> false
+                }
+            }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        requireActivity().invalidateOptionsMenu()
     }
 }

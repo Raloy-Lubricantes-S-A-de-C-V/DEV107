@@ -54,7 +54,7 @@ data class NewTechnicianWebhookRequest(
 )
 
 // ==========================================
-// NUEVOS MODELOS PARA EMPRESAS
+// MODELOS PARA EMPRESAS
 // ==========================================
 data class Empresa(
     @SerializedName("id") val id: Int,
@@ -63,7 +63,7 @@ data class Empresa(
     @SerializedName("calle") val calle: String?,
     @SerializedName("noextint") val noextint: String?,
     @SerializedName("colonia") val colonia: String?,
-    @SerializedName("codpostal") val codpostal: Double?, // Viene como 54000.0
+    @SerializedName("codpostal") val codpostal: Double?,
     @SerializedName("poblacion") val poblacion: String?,
     @SerializedName("cveentfed") val cveentfed: String?,
     @SerializedName("rfc") val rfc: String?
@@ -80,7 +80,7 @@ data class EmpresaRequest(
     val calle: String,
     val noextint: String,
     val colonia: String,
-    val codpostal: Int, // Se envía como Int (ej. 55000)
+    val codpostal: Int,
     val poblacion: String,
     val cveentfed: String,
     val rfc: String
@@ -88,7 +88,7 @@ data class EmpresaRequest(
 
 data class EmpresaResponse(
     val error: Boolean,
-    val id: Int? = null,
+    val id: Any? = null,
     val msj: String? = null
 )
 
@@ -102,7 +102,10 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    @POST("autenticate")
+    // ==========================================
+    // CORRECCIÓN AQUÍ: "authenticate" con 'H' o "autenticate/" si Flask pide slash
+    // ==========================================
+    @POST("authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
     @POST("user-login")
@@ -124,7 +127,7 @@ interface ApiService {
     suspend fun sendNewTechnicianWebhook(@Body request: NewTechnicianWebhookRequest): Response<Unit>
 
     // ==========================================
-    // NUEVOS ENDPOINTS EMPRESAS
+    // ENDPOINTS EMPRESAS
     // ==========================================
     @GET("empresas")
     suspend fun getEmpresas(): Response<EmpresaListResponse>

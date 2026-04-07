@@ -57,12 +57,11 @@ class MainActivity : AppCompatActivity() {
         val transaction = supportFragmentManager.beginTransaction()
             .replace(R.id.main_container, fragment)
         if (addToBackStack) transaction.addToBackStack(null)
-        transaction.commit()
+
+        // CORRECCIÓN CRÍTICA: Permite cambiar de fragmento incluso si la app está en segundo plano (minimizada)
+        transaction.commitAllowingStateLoss()
     }
 
-    // ==========================================
-    // DESTRUCCIÓN TOTAL (LOGOUT NUCLEAR)
-    // ==========================================
     fun logout() {
         // 1. Borrar datos locales y tokens
         sessionManager.clearSession()
@@ -70,14 +69,7 @@ class MainActivity : AppCompatActivity() {
         // 2. Limpiar el historial completo (BackStack)
         supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
-        // 3. Limpiar caché física de la app
-        try {
-            cacheDir.deleteRecursively()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-        // 4. Redirigir al Login
+        // 3. Redirigir al Login
         replaceFragment(LoginFragment())
     }
 }
