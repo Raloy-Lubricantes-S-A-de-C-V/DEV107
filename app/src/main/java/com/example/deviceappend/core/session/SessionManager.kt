@@ -37,21 +37,21 @@ class SessionManager(context: Context) {
 
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
 
-    // NUEVO: Función para guardar solo el correo temporalmente en el flujo de recuperación
     fun saveUsername(username: String) {
         prefs.edit().putString(KEY_USERNAME, username).apply()
     }
 
-    // GUARDAMOS EL PERFIL COMPLETO DESDE EL LOGIN
+    // GUARDAMOS EL PERFIL COMPLETO DESDE EL LOGIN (CORREGIDO CON ELVIS OPERATOR ?:)
     fun saveUserProfile(profile: UserProfile) {
         prefs.edit().apply {
-            putInt(KEY_USER_ID, profile.id)
-            putString(KEY_USERNAME, profile.user)
-            putString(KEY_NAME, profile.name)
-            putInt(KEY_LIDER, profile.lider)
-            putInt(KEY_SYS, profile.sys)
-            putInt(KEY_ADMIN, profile.admin)
-            putInt(KEY_NORMAL, profile.normal)
+            // El operador ?: le da un valor por defecto si la variable viene nula desde el API
+            putInt(KEY_USER_ID, profile.id ?: -1)
+            putString(KEY_USERNAME, profile.user ?: "")
+            putString(KEY_NAME, profile.name ?: "")
+            putInt(KEY_LIDER, profile.lider ?: 0)
+            putInt(KEY_SYS, profile.sys ?: 0)
+            putInt(KEY_ADMIN, profile.admin ?: 0)
+            putInt(KEY_NORMAL, profile.normal ?: 1) // 1 asumiendo que al menos es usuario normal
             apply()
         }
     }

@@ -22,6 +22,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val binding get() = _binding!!
     private lateinit var sessionManager: SessionManager
 
+    // CORTAFUEGOS NIVEL 1
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -41,8 +42,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         _binding = FragmentHomeBinding.bind(view)
 
+        // 1. Configuramos el menú ANTES de la verificación para que se dibuje de inmediato
         setupMenu()
 
+        // 2. CORTAFUEGOS NIVEL 2: Verificación de servidor
         checkconnect(binding.root) {
             setupUI()
         }
@@ -59,20 +62,24 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                // SOLUCIÓN: Limpiamos cualquier menú viejo (como el del Login)
+                menu.clear()
+
                 menuInflater.inflate(R.menu.main_menu, menu)
                 menu.findItem(R.id.action_back_to_login)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = false
+
+                // Forzamos a mostrar la Hamburguesa y el Logout
                 menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
 
-                // CORTAFUEGOS DE ROL: Solo el sys ve la opción de empresas
+                // Mostrar opción de empresas solo si es SYS
                 menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.action_empresas -> {
-                        // Navega al nuevo fragmento
                         (activity as? MainActivity)?.replaceFragment(EmpresasFragment(), true)
                         true
                     }
@@ -88,6 +95,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        // SOLUCIÓN: Ordenarle a la barra superior que se actualice Inmediatamente
+        requireActivity().invalidateOptionsMenu()
     }
 
     private fun setupClickListeners() {
