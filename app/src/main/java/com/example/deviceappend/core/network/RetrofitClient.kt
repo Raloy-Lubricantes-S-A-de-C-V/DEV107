@@ -1,20 +1,32 @@
 package com.example.deviceappend.core.network
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // ÚNICA URL BASE ACTIVA Y ESTRICTA (Debe terminar en "/")
     private const val BASE_URL = "https://apir.raloy.com.mx/kioskoit/api/v1/"
     private var retrofit: Retrofit? = null
 
     fun init(context: Context) {
         if (retrofit == null) {
+
+            // ==========================================
+            // LOGGING INTERCEPTOR (MODO DIOS)
+            // ==========================================
+            // Esto imprimirá en el Logcat de Android Studio toda la petición HTTP
+            val logging = HttpLoggingInterceptor { message ->
+                Log.d("RetrofitLog", message)
+            }.apply {
+                level = HttpLoggingInterceptor.Level.BODY // Muestra URL, Headers y Body
+            }
+
             val okHttpClient = OkHttpClient.Builder()
-                // Interceptor que inyecta el token Bearer automáticamente
+                .addInterceptor(logging) // Lo agregamos aquí
                 .addInterceptor(AuthInterceptor(context))
                 .build()
 
