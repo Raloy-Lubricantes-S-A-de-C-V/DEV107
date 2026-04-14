@@ -80,7 +80,7 @@ data class EmpresaRequest(
     val calle: String,
     val noextint: String,
     val colonia: String,
-    val codpostal: Int?, // Sincronizado con float de la DB
+    val codpostal: Int?,
     val poblacion: String,
     val cveentfed: String,
     val rfc: String
@@ -93,31 +93,33 @@ data class EmpresaResponse(
 )
 
 interface ApiService {
-    @GET("api/v1/check-connectivity")
+    // Se quitó el "api/v1/" de todos los endpoints porque RetrofitClient ya lo tiene en su BASE_URL
+
+    @GET("check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
 
-    @GET("api/v1/users/list")
+    @GET("users/list")
     suspend fun listUsers(): Response<UserListResponse>
 
-    @POST("api/v1/register-request")
+    @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    @POST("api/v1/authenticate")
+    @POST("authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
-    @POST("api/v1/user-login")
+    @POST("user-login")
     suspend fun loginUser(@Body request: UserLoginRequest): Response<AuthResponse>
 
-    @POST("api/v1/rol/source/is_sys")
+    @POST("rol/source/is_sys")
     suspend fun checkIsSysAdmin(@Body request: CheckSysAdminRequest): Response<CheckSysAdminResponse>
 
-    @GET("api/v1/AYd34kWfLfPRY05vO")
+    @GET("AYd34kWfLfPRY05vO")
     suspend fun getPasswordHash(@Query("password") plainPassword: String): Response<Map<String, String>>
 
-    @POST("api/v1/update-password")
+    @POST("update-password")
     suspend fun updatePassword(@Body request: UpdatePasswordRequest): Response<Map<String, Any>>
 
-    // Endpoints Externos de Webhook (Sin prefijo api/v1)
+    // Endpoints Externos de Webhook (Estos conservan la URL completa porque van a n8n)
     @POST("https://n8n.raloy.com.mx/webhook/kioskoti-recuperacion-contrase%C3%B1a")
     suspend fun sendRecoveryEmail(@Body request: RecoveryEmailRequest): Response<Unit>
 
@@ -127,12 +129,12 @@ interface ApiService {
     // ==========================================
     // ENDPOINTS EMPRESAS
     // ==========================================
-    @GET("api/v1/empresas")
+    @GET("empresas")
     suspend fun getEmpresas(): Response<EmpresaListResponse>
 
-    @POST("api/v1/empresas")
+    @POST("empresas")
     suspend fun createEmpresa(@Body request: EmpresaRequest): Response<EmpresaResponse>
 
-    @PUT("api/v1/empresas/{id}")
+    @PUT("empresas/{id}")
     suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
 }
