@@ -33,7 +33,7 @@ data class UserListItem(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("user") val user: String?,
-    @SerializedName("lider") val lider: Int // Cambiado a Int para coincidir con la causa raíz (1/0)
+    @SerializedName("lider") val lider: Int
 )
 
 data class UserListResponse(
@@ -80,7 +80,7 @@ data class EmpresaRequest(
     val calle: String,
     val noextint: String,
     val colonia: String,
-    val codpostal: Int,
+    val codpostal: Int?, // Sincronizado con float de la DB
     val poblacion: String,
     val cveentfed: String,
     val rfc: String
@@ -93,32 +93,31 @@ data class EmpresaResponse(
 )
 
 interface ApiService {
-    @GET("check-connectivity")
+    @GET("api/v1/check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
 
-    @GET("users/list")
+    @GET("api/v1/users/list")
     suspend fun listUsers(): Response<UserListResponse>
 
-    @POST("register-request")
+    @POST("api/v1/register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    // SE ELIMINÓ PREFIJO /api/v1/ Y SE CORRIGIÓ A "authenticate" (CON H)
-    @POST("authenticate")
+    @POST("api/v1/authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
-    @POST("user-login")
+    @POST("api/v1/user-login")
     suspend fun loginUser(@Body request: UserLoginRequest): Response<AuthResponse>
 
-    @POST("rol/source/is_sys")
+    @POST("api/v1/rol/source/is_sys")
     suspend fun checkIsSysAdmin(@Body request: CheckSysAdminRequest): Response<CheckSysAdminResponse>
 
-    @GET("AYd34kWfLfPRY05vO")
+    @GET("api/v1/AYd34kWfLfPRY05vO")
     suspend fun getPasswordHash(@Query("password") plainPassword: String): Response<Map<String, String>>
 
-    @POST("update-password")
+    @POST("api/v1/update-password")
     suspend fun updatePassword(@Body request: UpdatePasswordRequest): Response<Map<String, Any>>
 
-    // Endpoints Externos (Webhook n8n)
+    // Endpoints Externos de Webhook (Sin prefijo api/v1)
     @POST("https://n8n.raloy.com.mx/webhook/kioskoti-recuperacion-contrase%C3%B1a")
     suspend fun sendRecoveryEmail(@Body request: RecoveryEmailRequest): Response<Unit>
 
@@ -128,12 +127,12 @@ interface ApiService {
     // ==========================================
     // ENDPOINTS EMPRESAS
     // ==========================================
-    @GET("empresas")
+    @GET("api/v1/empresas")
     suspend fun getEmpresas(): Response<EmpresaListResponse>
 
-    @POST("empresas")
+    @POST("api/v1/empresas")
     suspend fun createEmpresa(@Body request: EmpresaRequest): Response<EmpresaResponse>
 
-    @PUT("empresas/{id}")
+    @PUT("api/v1/empresas/{id}")
     suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
 }
