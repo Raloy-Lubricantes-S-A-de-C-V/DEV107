@@ -46,6 +46,7 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
         lifecycleScope.launch {
             try {
+                // PASO 1: Obtener el Hash seguro
                 val hashRes = api.getPasswordHash(nuevaClave)
                 val hashGenerado = hashRes.body()?.get("hash")
 

@@ -1,8 +1,10 @@
 package com.example.deviceappend.ui.login
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.view.MenuHost
@@ -38,8 +40,11 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 val api = RetrofitClient.instance
                 val session = SessionManager(requireContext())
 
-                // 1. Usando el endpoint único y correcto
-                val authRes = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                // FALLBACK AUTOMÁTICO: Prueba ruta vieja, si da 404 prueba ruta nueva.
+                var authRes = api.autenticateAppOld(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                if (authRes.code() == 404) {
+                    authRes = api.autenticateAppNew(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                }
 
                 if (authRes.isSuccessful && authRes.body()?.data != null) {
                     val token = authRes.body()?.data?.key ?: ""
@@ -112,7 +117,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     }
 
     private fun setupRegisterMenu() {
-        // CORRECCIÓN: Se agregó explícitamente "MenuHost ="
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
