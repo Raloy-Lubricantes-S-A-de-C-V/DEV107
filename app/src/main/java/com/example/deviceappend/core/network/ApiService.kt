@@ -37,10 +37,7 @@ data class UserListItem(
     @SerializedName("lider") val lider: Int
 )
 
-data class UserListResponse(
-    @SerializedName("error") val error: Boolean,
-    @SerializedName("data") val data: List<UserListItem>
-)
+data class UserListResponse(val error: Boolean, val data: List<UserListItem>)
 
 data class RegisterRequest(val name: String, val mail: String, val parent_id: Int, val code: Int)
 data class RegisterResponse(val error: Boolean, val id_request: Int? = null, val msj: String)
@@ -84,9 +81,6 @@ data class TecnicoConEmpresas(
 data class TecnicosListResponse(val error: Boolean, val data: List<TecnicoConEmpresas>)
 data class AsignarEmpresasRequest(val empresas: List<Int>)
 
-// ==========================================
-// NUEVOS MODELOS DE PROSPECTOS Y NOTIFICACIONES
-// ==========================================
 data class Prospecto(
     val id: Int, val name: String?, val mail: String?,
     val create_day: String?, val view: Int, val acepted: Int,
@@ -106,6 +100,25 @@ data class Notificacion(
     val isRead: Boolean, val prospectoId: Int
 )
 
+data class DelsipEmpresa(
+    @SerializedName("cveempresa") val cveempresa: String
+)
+
+data class DelsipTestResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<DelsipEmpresa>
+)
+
+data class DelsipImage(
+    @SerializedName("image_base64") val imageBase64: String,
+    @SerializedName("filename") val filename: String
+)
+data class DelsipImageResponse(
+    val error: Boolean,
+    val data: DelsipImage?,
+    val msj: String?
+)
+
 interface ApiService {
     @GET("check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
@@ -116,11 +129,17 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
+    // ==========================================
+    // MÉTODO CORRECTO Y ÚNICO DE AUTENTICACIÓN
+    // ==========================================
     @POST("authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
     @POST("user-login")
     suspend fun loginUser(@Body request: UserLoginRequest): Response<AuthResponse>
+
+    @POST("rol/source/is_sys")
+    suspend fun checkIsSysAdmin(@Body request: CheckSysAdminRequest): Response<CheckSysAdminResponse>
 
     @GET("AYd34kWfLfPRY05vO")
     suspend fun getPasswordHash(@Query("password") plainPassword: String): Response<Map<String, String>>
@@ -149,7 +168,6 @@ interface ApiService {
     @PUT("tecnicos/{id_usuario}/empresas")
     suspend fun asignarEmpresasATecnico(@Path("id_usuario") idUsuario: Int, @Body request: AsignarEmpresasRequest): Response<EmpresaResponse>
 
-    // ENDPOINTS PROSPECTOS
     @GET("prospectos")
     suspend fun getProspectos(): Response<ProspectoListResponse>
 
@@ -161,4 +179,13 @@ interface ApiService {
 
     @POST("prospectos/{id}/aprobar")
     suspend fun aprobarProspecto(@Path("id") id: Int, @Body req: AprobarProspectoRequest): Response<Map<String, Any>>
+
+    // ==========================================
+    // ENDPOINTS DE PRUEBA DELSIP
+    // ==========================================
+    @GET("delsip/test")
+    suspend fun testDelsipConnection(): Response<DelsipTestResponse>
+
+    @GET("delsip/testimage")
+    suspend fun getDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
 }

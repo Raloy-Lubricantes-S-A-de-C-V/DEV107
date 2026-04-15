@@ -24,6 +24,7 @@ import com.example.deviceappend.R
 import com.example.deviceappend.core.network.RetrofitClient
 import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.databinding.FragmentHomeBinding
+import com.example.deviceappend.ui.delsip.DelsipTestFragment
 import com.example.deviceappend.ui.empresas.EmpresasFragment
 import com.example.deviceappend.ui.prospectos.NotificationsFragment
 import com.example.deviceappend.ui.prospectos.ProspectosFragment
@@ -85,6 +86,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
                 menu.findItem(R.id.action_tecnicos)?.isVisible = sessionManager.isAdmin()
                 menu.findItem(R.id.action_prospectos)?.isVisible = sessionManager.isAdmin()
+                // MOSTRAR LA NUEVA OPCIÓN DELSIP
+                menu.findItem(R.id.action_delsip_test)?.isVisible = sessionManager.isAdmin() || sessionManager.isSys()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -103,6 +106,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                     R.id.action_empresas -> {
                         (activity as? MainActivity)?.replaceFragment(EmpresasFragment(), true)
+                        true
+                    }
+                    R.id.action_delsip_test -> {
+                        // NAVEGACIÓN AL NUEVO MÓDULO
+                        (activity as? MainActivity)?.replaceFragment(DelsipTestFragment(), true)
                         true
                     }
                     R.id.action_new_scanner -> {
@@ -128,38 +136,31 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     if (count > 0) {
                         item?.title = "Notificaciones ($count)"
 
-                        // 1. Cambiamos la campana a color Amarillo
                         val iconDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_popup_reminder)?.mutate()
-                        iconDrawable?.setTint(Color.parseColor("#FFC107")) // Amarillo
+                        iconDrawable?.setTint(Color.parseColor("#FFC107"))
                         item?.icon = iconDrawable
 
-                        // 2. Animación de campaneo (Temblor)
-                        // Añadimos un pequeño delay para asegurar que el menú ya se dibujó en la pantalla
                         launch {
                             delay(400)
                             val actionView = requireActivity().findViewById<View>(R.id.action_notifications)
                             if (actionView != null) {
                                 val animator = ObjectAnimator.ofFloat(actionView, "rotation", 0f, 25f, -25f, 25f, -25f, 0f)
                                 animator.duration = 800
-                                animator.repeatCount = 2 // Repetir la animación 2 veces
+                                animator.repeatCount = 2
                                 animator.start()
                             }
                         }
 
-                        // 3. Emitir la notificación al sistema Android (Barra superior del celular)
                         sendSystemNotification(count)
 
                     } else {
                         item?.title = "Notificaciones"
-                        // Restaura el color blanco si no hay alertas
                         val iconDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_popup_reminder)?.mutate()
                         iconDrawable?.setTint(Color.WHITE)
                         item?.icon = iconDrawable
                     }
                 }
-            } catch(e: Exception) {
-                // Silencioso si falla la red
-            }
+            } catch(e: Exception) {}
         }
     }
 
@@ -167,17 +168,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val context = requireContext()
         val channelId = "prospectos_channel"
 
-        // En Android 13 o superior, se debe pedir permiso al usuario la primera vez
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requireActivity().requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-                return // Si no tenía permiso se lo pide y corta la ejecución por ahora.
+                return
             }
         }
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Crear el canal (Requisito obligatorio desde Android 8.0 Oreo)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -189,22 +188,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Crear un Intent para que al tocar la notificación en el celular, se abra la app
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
-        // Construir la notificación visual
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_user) // Usamos un icono interno
+            .setSmallIcon(R.drawable.ic_user)
             .setContentTitle("Nueva Solicitud de Técnico")
             .setContentText("Tienes $count solicitud(es) de prospectos pendientes de revisión.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true) // Se borra al tocarla
+            .setAutoCancel(true)
 
-        // Lanzar notificación
         notificationManager.notify(1001, builder.build())
     }
 
@@ -219,6 +215,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.btnScanner.setOnClickListener {
             (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
+        }
+
+        binding.btnScannerColaborador.setOnClickListener {
+            Toast.makeText(context, "Módulo de Escaneo de Colaborador en construcción", Toast.LENGTH_SHORT).show()
         }
     }
 
