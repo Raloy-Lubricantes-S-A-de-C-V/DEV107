@@ -12,6 +12,7 @@ import com.example.deviceappend.R
 import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.databinding.FragmentHomeBinding
 import com.example.deviceappend.ui.empresas.EmpresasFragment
+import com.example.deviceappend.ui.tecnicos.TecnicosFragment
 import com.example.deviceappend.ui.wizard.WizardFragment
 import com.example.deviceappend.utils.checkconnect
 
@@ -24,19 +25,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ==========================================
-        // CORTAFUEGOS SEGURO (Sin crashear el Manager)
-        // ==========================================
         sessionManager = SessionManager(requireContext())
         if (sessionManager.getToken().isNullOrEmpty()) {
             view.visibility = View.GONE
             (activity as? MainActivity)?.logout()
-            return // Aborta el inflado de la vista
+            return
         }
 
         _binding = FragmentHomeBinding.bind(view)
 
-        // El menú se infla de inmediato porque ya sabemos que sí hay sesión
+        // El menú se infla de inmediato
         setupMenu()
 
         checkconnect(binding.root) {
@@ -61,11 +59,20 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.findItem(R.id.action_home)?.isVisible = false
                 menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
+
+                // Mostrar Empresas solo a "Sys"
                 menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
+
+                // Mostrar Técnicos solo a "Admin"
+                menu.findItem(R.id.action_tecnicos)?.isVisible = sessionManager.isAdmin()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
+                    R.id.action_tecnicos -> {
+                        (activity as? MainActivity)?.replaceFragment(TecnicosFragment(), true)
+                        true
+                    }
                     R.id.action_empresas -> {
                         (activity as? MainActivity)?.replaceFragment(EmpresasFragment(), true)
                         true

@@ -92,9 +92,26 @@ data class EmpresaResponse(
     val msj: String? = null
 )
 
-interface ApiService {
-    // Se quitó el "api/v1/" de todos los endpoints porque RetrofitClient ya lo tiene en su BASE_URL
+// ==========================================
+// MODELOS PARA TÉCNICOS Y ASIGNACIÓN
+// ==========================================
+data class TecnicoConEmpresas(
+    @SerializedName("id_usuario") val idUsuario: Int,
+    @SerializedName("nombre") val nombre: String?,
+    @SerializedName("empresas") val empresas: List<Int>?
+)
 
+data class TecnicosListResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<TecnicoConEmpresas>
+)
+
+data class AsignarEmpresasRequest(
+    val empresas: List<Int>
+)
+
+
+interface ApiService {
     @GET("check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
 
@@ -104,7 +121,10 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    @POST("authenticate")
+    // ==========================================
+    // CORRECCIÓN: SE REGRESÓ A "autenticate" SIN LA 'H'
+    // ==========================================
+    @POST("autenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
     @POST("user-login")
@@ -119,7 +139,6 @@ interface ApiService {
     @POST("update-password")
     suspend fun updatePassword(@Body request: UpdatePasswordRequest): Response<Map<String, Any>>
 
-    // Endpoints Externos de Webhook (Estos conservan la URL completa porque van a n8n)
     @POST("https://n8n.raloy.com.mx/webhook/kioskoti-recuperacion-contrase%C3%B1a")
     suspend fun sendRecoveryEmail(@Body request: RecoveryEmailRequest): Response<Unit>
 
@@ -137,4 +156,13 @@ interface ApiService {
 
     @PUT("empresas/{id}")
     suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
+
+    // ==========================================
+    // ENDPOINTS TÉCNICOS
+    // ==========================================
+    @GET("tecnicos/empresas")
+    suspend fun getTecnicosConEmpresas(): Response<TecnicosListResponse>
+
+    @PUT("tecnicos/{id_usuario}/empresas")
+    suspend fun asignarEmpresasATecnico(@Path("id_usuario") idUsuario: Int, @Body request: AsignarEmpresasRequest): Response<EmpresaResponse>
 }
