@@ -53,10 +53,7 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
                 if (hashRes.isSuccessful && hashGenerado != null) {
 
                     // FALLBACK AUTOMÁTICO
-                    var appAuth = api.autenticateAppOld(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
-                    if (appAuth.code() == 404) {
-                        appAuth = api.autenticateAppNew(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
-                    }
+                    var appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
 
                     if (appAuth.isSuccessful && appAuth.body()?.data != null) {
                         val tokenFresco = appAuth.body()?.data?.key ?: ""

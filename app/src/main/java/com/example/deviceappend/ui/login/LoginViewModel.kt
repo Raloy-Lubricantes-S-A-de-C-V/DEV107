@@ -16,13 +16,14 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
 
     fun login(user: String, pass: String) {
         _loginState.value = LoginState.Loading
-
-        // Se eliminó la validación local de "123" que activaba RequirePasswordChange.
-        // Ahora el flujo siempre consulta directamente a la API de Raloy.
         viewModelScope.launch {
             val result = repository.login(user, pass)
             result.onSuccess { userModel ->
-                _loginState.value = LoginState.Success(userModel)
+                if (userModel.message == "REQUIRE_CHANGE") {
+                    _loginState.value = LoginState.RequirePasswordChange
+                } else {
+                    _loginState.value = LoginState.Success(userModel)
+                }
             }.onFailure { error ->
                 _loginState.value = LoginState.Error(error.message ?: "Error de conexión")
             }

@@ -13,12 +13,7 @@ class LoginRepository(private val sessionManager: SessionManager) {
             try {
                 val api = RetrofitClient.instance
 
-                // FALLBACK AUTOMÁTICO: Prueba ruta vieja, si da 404 prueba ruta nueva.
-                var appAuth = api.autenticateAppOld(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
-                if (appAuth.code() == 404) {
-                    appAuth = api.autenticateAppNew(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
-                }
-
+                val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
                 if (!appAuth.isSuccessful) return@withContext Result.failure(Exception("Fallo App Auth (HTTP ${appAuth.code()})"))
                 sessionManager.saveToken(appAuth.body()?.data?.key ?: "")
 
@@ -30,6 +25,12 @@ class LoginRepository(private val sessionManager: SessionManager) {
                     val profile = authData.profile
                     val msj = authData.msj ?: "Sesión iniciada correctamente"
 
+                    // VALIDACIÓN DE CONTRASEÑA TEMPORAL
+                    if (profile?.requirePasswordChange == true) {
+                        sessionManager.saveUsername(email) // Guardamos email para el update
+                        return@withContext Result.success(LoggedInUser("0", email, "REQUIRE_CHANGE"))
+                    }
+
                     if (profile != null) {
                         sessionManager.saveUserProfile(profile)
                     }
@@ -37,7 +38,7 @@ class LoginRepository(private val sessionManager: SessionManager) {
 
                     Result.success(LoggedInUser(profile?.id?.toString() ?: "", profile?.name ?: email, msj))
                 } else {
-                    Result.failure(Exception(authData?.msj ?: "Credenciales inválidas (HTTP ${userAuth.code()})"))
+                    Result.failure(Exception(authData?.msj ?: "Credenciales inválidas"))
                 }
             } catch (e: Exception) {
                 Result.failure(e)

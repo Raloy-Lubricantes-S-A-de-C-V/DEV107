@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
                 replaceFragment(HomeFragment())
                 true
             }
-            R.id.action_logout, R.id.action_back_to_login -> {
+            R.id.action_logout, R.id.action_logout -> {
                 logout()
                 true
             }

@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_back_to_login"
-        android:title="Ir al Login"
-        android:icon="@drawable/ic_user"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/action_notifications"
+        android:title="Notificaciones"
+        android:icon="@android:drawable/ic_popup_reminder"
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_home"
@@ -20,6 +20,7 @@
         android:icon="@drawable/ic_menu"
         app:showAsAction="always">
         <menu>
+            <item android:id="@+id/action_prospectos" android:title="Prospectos y Solicitudes" />
             <item android:id="@+id/action_tecnicos" android:title="Gestión de Técnicos" />
             <item android:id="@+id/action_empresas" android:title="Creación de empresas" />
             <item android:id="@+id/action_new_scanner" android:title="Escanear Etiqueta" />

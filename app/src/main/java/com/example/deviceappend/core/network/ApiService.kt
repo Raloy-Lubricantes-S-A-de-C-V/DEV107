@@ -14,7 +14,8 @@ data class UserProfile(
     @SerializedName("lider") val lider: Int?,
     @SerializedName("sys") val sys: Int?,
     @SerializedName("admin") val admin: Int?,
-    @SerializedName("normal") val normal: Int?
+    @SerializedName("normal") val normal: Int?,
+    @SerializedName("require_password_change") val requirePasswordChange: Boolean? = false
 )
 
 data class AuthData(
@@ -53,9 +54,6 @@ data class NewTechnicianWebhookRequest(
     @SerializedName("asunto") val asunto: String? = null
 )
 
-// ==========================================
-// MODELOS PARA EMPRESAS
-// ==========================================
 data class Empresa(
     @SerializedName("id") val id: Int,
     @SerializedName("cveempresa") val cveempresa: String?,
@@ -69,45 +67,43 @@ data class Empresa(
     @SerializedName("rfc") val rfc: String?
 )
 
-data class EmpresaListResponse(
-    @SerializedName("error") val error: Boolean,
-    @SerializedName("data") val data: List<Empresa>
-)
-
+data class EmpresaListResponse(val error: Boolean, val data: List<Empresa>)
 data class EmpresaRequest(
-    val cveempresa: String,
-    val descripcio: String,
-    val calle: String,
-    val noextint: String,
-    val colonia: String,
-    val codpostal: Int?,
-    val poblacion: String,
-    val cveentfed: String,
-    val rfc: String
+    val cveempresa: String, val descripcio: String, val calle: String,
+    val noextint: String, val colonia: String, val codpostal: Int?,
+    val poblacion: String, val cveentfed: String, val rfc: String
 )
+data class EmpresaResponse(val error: Boolean, val id: Any? = null, val msj: String? = null)
 
-data class EmpresaResponse(
-    val error: Boolean,
-    val id: Any? = null,
-    val msj: String? = null
-)
-
-// ==========================================
-// MODELOS PARA TÉCNICOS Y ASIGNACIÓN
-// ==========================================
 data class TecnicoConEmpresas(
     @SerializedName("id_usuario") val idUsuario: Int,
     @SerializedName("nombre") val nombre: String?,
     @SerializedName("empresas") val empresas: List<Int>?
 )
 
-data class TecnicosListResponse(
-    @SerializedName("error") val error: Boolean,
-    @SerializedName("data") val data: List<TecnicoConEmpresas>
+data class TecnicosListResponse(val error: Boolean, val data: List<TecnicoConEmpresas>)
+data class AsignarEmpresasRequest(val empresas: List<Int>)
+
+// ==========================================
+// NUEVOS MODELOS DE PROSPECTOS Y NOTIFICACIONES
+// ==========================================
+data class Prospecto(
+    val id: Int, val name: String?, val mail: String?,
+    val create_day: String?, val view: Int, val acepted: Int,
+    val declined: Int, val open: Int, val code: Int?, val parent_id: Int?
 )
 
-data class AsignarEmpresasRequest(
+data class ProspectoListResponse(val error: Boolean, val data: List<Prospecto>)
+
+data class AprobarProspectoRequest(
+    val name: String, val mail: String, val parent_id: Int,
+    val sys: Int, val admin: Int, val normal: Int, val lider: Int,
     val empresas: List<Int>
+)
+
+data class Notificacion(
+    val id: Int, val modulo: String, val descripcion: String,
+    val isRead: Boolean, val prospectoId: Int
 )
 
 interface ApiService {
@@ -120,20 +116,11 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    // ==========================================
-    // CORTAFUEGOS DE AUTENTICACIÓN (RUTAS DOBLES)
-    // ==========================================
-    @POST("autenticate") // Intento 1: Servidor no reiniciado
-    suspend fun autenticateAppOld(@Body request: AuthAppRequest): Response<AuthResponse>
-
-    @POST("authenticate") // Intento 2: Servidor con código actualizado
-    suspend fun autenticateAppNew(@Body request: AuthAppRequest): Response<AuthResponse>
+    @POST("authenticate")
+    suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
     @POST("user-login")
     suspend fun loginUser(@Body request: UserLoginRequest): Response<AuthResponse>
-
-    @POST("rol/source/is_sys")
-    suspend fun checkIsSysAdmin(@Body request: CheckSysAdminRequest): Response<CheckSysAdminResponse>
 
     @GET("AYd34kWfLfPRY05vO")
     suspend fun getPasswordHash(@Query("password") plainPassword: String): Response<Map<String, String>>
@@ -147,9 +134,6 @@ interface ApiService {
     @POST("https://n8n.raloy.com.mx/webhook/nuevo-tecnico")
     suspend fun sendNewTechnicianWebhook(@Body request: NewTechnicianWebhookRequest): Response<Unit>
 
-    // ==========================================
-    // ENDPOINTS EMPRESAS
-    // ==========================================
     @GET("empresas")
     suspend fun getEmpresas(): Response<EmpresaListResponse>
 
@@ -159,12 +143,22 @@ interface ApiService {
     @PUT("empresas/{id}")
     suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
 
-    // ==========================================
-    // ENDPOINTS TÉCNICOS
-    // ==========================================
     @GET("tecnicos/empresas")
     suspend fun getTecnicosConEmpresas(): Response<TecnicosListResponse>
 
     @PUT("tecnicos/{id_usuario}/empresas")
     suspend fun asignarEmpresasATecnico(@Path("id_usuario") idUsuario: Int, @Body request: AsignarEmpresasRequest): Response<EmpresaResponse>
+
+    // ENDPOINTS PROSPECTOS
+    @GET("prospectos")
+    suspend fun getProspectos(): Response<ProspectoListResponse>
+
+    @PUT("prospectos/{id}/visto")
+    suspend fun marcarProspectoVisto(@Path("id") id: Int): Response<Map<String, Any>>
+
+    @PUT("prospectos/{id}/declinar")
+    suspend fun declinarProspecto(@Path("id") id: Int): Response<Map<String, Any>>
+
+    @POST("prospectos/{id}/aprobar")
+    suspend fun aprobarProspecto(@Path("id") id: Int, @Body req: AprobarProspectoRequest): Response<Map<String, Any>>
 }

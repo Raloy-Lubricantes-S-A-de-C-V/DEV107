@@ -41,11 +41,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 val session = SessionManager(requireContext())
 
                 // FALLBACK AUTOMÁTICO: Prueba ruta vieja, si da 404 prueba ruta nueva.
-                var authRes = api.autenticateAppOld(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
-                if (authRes.code() == 404) {
-                    authRes = api.autenticateAppNew(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
-                }
-
+                var authRes = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
                 if (authRes.isSuccessful && authRes.body()?.data != null) {
                     val token = authRes.body()?.data?.key ?: ""
                     session.saveToken(token)

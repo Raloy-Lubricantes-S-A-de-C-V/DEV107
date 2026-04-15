@@ -25,7 +25,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLoginBinding.bind(view)
 
-        // Configuración de botones
         binding.btnLogin.setOnClickListener {
             val user = binding.etUsername.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
@@ -36,12 +35,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             }
         }
 
-        // Navegación a Recuperación de Contraseña
         binding.tvForgotPassword.setOnClickListener {
             (activity as? MainActivity)?.replaceFragment(ForgotPasswordFragment(), true)
         }
 
-        // AJUSTE: Navegación real al fragmento de Alta de Nuevo Técnico
         binding.tvCreateAccount.setOnClickListener {
             (activity as? MainActivity)?.replaceFragment(RegisterFragment(), true)
         }
@@ -49,7 +46,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         setupObservers()
     }
 
-    // Asegúrate de modificar SOLO esta función dentro de LoginFragment.kt
     private fun setupObservers() {
         viewModel.loginState.observe(viewLifecycleOwner) { state ->
             when (state) {
@@ -59,16 +55,19 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 }
                 is LoginState.Success -> {
                     binding.progressBar.visibility = View.GONE
-                    // CAMBIO: Mostramos el mensaje que viene del backend
                     Toast.makeText(context, state.user.message, Toast.LENGTH_LONG).show()
                     (activity as? MainActivity)?.replaceFragment(HomeFragment())
+                }
+                is LoginState.RequirePasswordChange -> {
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(context, "Requiere actualizar contraseña temporal", Toast.LENGTH_LONG).show()
+                    (activity as? MainActivity)?.replaceFragment(ChangePasswordFragment(), true)
                 }
                 is LoginState.Error -> {
                     binding.progressBar.visibility = View.GONE
                     binding.btnLogin.isEnabled = true
                     Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 }
-                else -> {}
             }
         }
     }

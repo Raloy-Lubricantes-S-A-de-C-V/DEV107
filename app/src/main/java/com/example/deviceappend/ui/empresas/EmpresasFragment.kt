@@ -222,7 +222,7 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
 
-                menu.findItem(R.id.action_back_to_login)?.isVisible = false
+                menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_empresas)?.isVisible = false
 
                 menu.findItem(R.id.action_home)?.isVisible = true
