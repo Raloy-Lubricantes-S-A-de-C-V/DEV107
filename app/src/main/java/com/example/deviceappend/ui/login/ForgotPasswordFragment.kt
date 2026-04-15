@@ -80,7 +80,7 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
                 menu.findItem(R.id.action_logout)?.isVisible = false
                 // OCULTAMOS LA HAMBURGUESA EN RECUPERACIÓN DE CONTRASEÑA
                 menu.findItem(R.id.action_modules)?.isVisible = false
-                menu.findItem(R.id.action_back_to_login)?.isVisible = true
+                menu.findItem(R.id.action_logout)?.isVisible = true
             }
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
