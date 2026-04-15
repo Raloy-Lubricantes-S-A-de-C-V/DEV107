@@ -17,6 +17,8 @@ import com.example.deviceappend.R
 import com.example.deviceappend.core.network.*
 import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.utils.checkconnect
+import com.example.deviceappend.utils.hideLoader
+import com.example.deviceappend.utils.showLoader
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -49,16 +51,11 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
         super.onViewCreated(view, savedInstanceState)
         sessionManager = SessionManager(requireContext())
 
-        if (!sessionManager.isAdmin()) {
-            Toast.makeText(context, "Acceso denegado. Rol Admin requerido.", Toast.LENGTH_SHORT).show()
-            (activity as? MainActivity)?.supportFragmentManager?.popBackStack()
-            return
-        }
-
         setupMenu()
         bindViews(view)
 
-        checkconnect(view) {
+        // 1. CORTAFUEGOS Y LOADERS AL ENTRAR AL MÓDULO
+        checkconnect(view, "Cargando prospectos...") {
             loadData()
             setupClickListeners()
         }
@@ -83,6 +80,7 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
 
     private fun loadData() {
         viewLifecycleOwner.lifecycleScope.launch {
+            showLoader("Sincronizando...")
             try {
                 val api = RetrofitClient.instance
                 val reqP = async { api.getProspectos() }
@@ -105,7 +103,11 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
                 rvProspectos.adapter = ProspectosAdapter(allProspectos) { prospecto ->
                     selectProspecto(prospecto)
                 }
-            } catch (e: Exception) { Log.e("Prospectos", e.message.toString()) }
+            } catch (e: Exception) {
+                Log.e("Prospectos", e.message.toString())
+            } finally {
+                hideLoader()
+            }
         }
     }
 
@@ -126,7 +128,6 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
 
         prospectoId = p.id
 
-        // Lo marcamos como visto inmediatamente
         if (p.view == 0) {
             viewLifecycleOwner.lifecycleScope.launch {
                 RetrofitClient.instance.marcarProspectoVisto(p.id)
@@ -145,7 +146,6 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             selectedLiderId = l.id
         }
 
-        // Restringir visualización de checks avanzados si el usuario no es 'Sys'
         if (!sessionManager.isSys()) {
             cbSys.visibility = View.GONE
             cbLider.visibility = View.GONE
@@ -168,40 +168,32 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
                 lider = if (cbLider.isChecked) 1 else 0,
                 empresas = selectedEmpresasIds.toList()
             )
+
             viewLifecycleOwner.lifecycleScope.launch {
+                showLoader("Creando rol y enviando correo...")
                 try {
                     val res = RetrofitClient.instance.aprobarProspecto(prospectoId!!, req)
                     if (res.isSuccessful) {
                         val p = allProspectos.find { it.id == prospectoId }
-
-                        // ====================================================
-                        // FLÚJO N8N: ENVÍO DE CORREO AL NUEVO TÉCNICO
-                        // ====================================================
-                        val asunto = "Bienvenido a Raloy Asset Manager - Credenciales de Acceso"
                         val msj = "Hola ${p?.name},\n\n" +
                                 "Tu solicitud para ingresar al sistema Raloy Asset Manager ha sido aprobada.\n\n" +
-                                "Para tu primer inicio de sesión, utiliza las siguientes credenciales:\n\n" +
-                                "• Usuario / Correo: ${p?.mail}\n" +
-                                "• Contraseña Temporal: ${p?.code}\n\n" +
-                                "Por razones de seguridad, el sistema te pedirá cambiar tu contraseña inmediatamente después de ingresar por primera vez.\n\n" +
-                                "Saludos cordiales,\nEquipo de TI Raloy."
-
+                                "Usuario: ${p?.mail}\n" +
+                                "Contraseña Temporal: ${p?.code}\n\n" +
+                                "Ingresa a la app. Se te solicitará crear tu nueva contraseña."
                         try {
-                            val webhookReq = NewTechnicianWebhookRequest(email = p?.mail ?: "", mensaje = msj, asunto = asunto)
-                            RetrofitClient.instance.sendNewTechnicianWebhook(webhookReq)
-                        } catch (e: Exception) {
-                            Log.e("Prospectos", "Fallo silencioso al enviar correo n8n: ${e.message}")
-                        }
-                        // ====================================================
+                            RetrofitClient.instance.sendNewTechnicianWebhook(NewTechnicianWebhookRequest(p?.mail ?: "", msj, "Acceso a Raloy Asset Manager"))
+                        } catch (e: Exception) {}
 
-                        Toast.makeText(context, "Prospecto Aprobado y Rol Creado", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Prospecto Aprobado", Toast.LENGTH_LONG).show()
                         clearForm()
                         loadData()
                     } else {
-                        Toast.makeText(context, "Error en el servidor al aprobar", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Error en servidor", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
+                } finally {
+                    hideLoader()
                 }
             }
         }
@@ -209,12 +201,16 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
         btnDeclinar.setOnClickListener {
             if (prospectoId == null) return@setOnClickListener
             viewLifecycleOwner.lifecycleScope.launch {
-                val res = RetrofitClient.instance.declinarProspecto(prospectoId!!)
-                if (res.isSuccessful) {
-                    Toast.makeText(context, "Prospecto Declinado", Toast.LENGTH_SHORT).show()
-                    clearForm()
-                    loadData()
-                }
+                showLoader("Declinando prospecto...")
+                try {
+                    val res = RetrofitClient.instance.declinarProspecto(prospectoId!!)
+                    if (res.isSuccessful) {
+                        Toast.makeText(context, "Prospecto Declinado", Toast.LENGTH_SHORT).show()
+                        clearForm()
+                        loadData()
+                    }
+                } catch (e: Exception) {}
+                finally { hideLoader() }
             }
         }
     }
@@ -238,8 +234,6 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
-
-                // Limpiamos los ítems innecesarios y dejamos la flecha de regreso al Home
                 menu.findItem(R.id.action_home)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_notifications)?.isVisible = false
@@ -248,8 +242,6 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
-
-    // --- ADAPTADORES INTERNOS ---
 
     inner class ProspectosAdapter(
         private val list: List<Prospecto>,
@@ -273,8 +265,6 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             val p = list[position]
             holder.tvNombre.text = p.name
             holder.tvMail.text = p.mail
-
-            // La fecha viene del campo create_day
             holder.tvFecha.text = "Fecha de Solicitud: ${p.create_day ?: "N/A"}"
 
             var estado = "DESCONOCIDO"
@@ -309,16 +299,12 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
         private val empresas: List<Empresa>,
         private val selectedIds: MutableSet<Int>
     ) : RecyclerView.Adapter<EmpresasCheckAdapter.ViewHolder>() {
-
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val checkBox: CheckBox = view.findViewById(R.id.cbEmpresa)
         }
-
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_empresa_check, parent, false)
-            return ViewHolder(view)
+            return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_empresa_check, parent, false))
         }
-
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val empresa = empresas[position]
             holder.checkBox.text = "${empresa.cveempresa?.trim()} - ${empresa.descripcio?.trim()}"

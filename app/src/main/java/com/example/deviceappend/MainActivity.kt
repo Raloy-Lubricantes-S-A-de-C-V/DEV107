@@ -57,16 +57,14 @@ class MainActivity : AppCompatActivity() {
         val transaction = supportFragmentManager.beginTransaction()
             .replace(R.id.main_container, fragment)
         if (addToBackStack) transaction.addToBackStack(null)
-
-        // CORRECCIÓN CRÍTICA: Permite cambiar de fragmento incluso si la app está en segundo plano (minimizada)
         transaction.commitAllowingStateLoss()
     }
 
     fun logout() {
-        // 1. Borrar datos locales y tokens
+        // 1. Borrar datos locales
         sessionManager.clearSession()
 
-        // 2. Limpiar el historial completo (BackStack)
+        // 2. Limpiar TODO el historial de navegación para que "Atrás" no sirva
         supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
         // 3. Redirigir al Login

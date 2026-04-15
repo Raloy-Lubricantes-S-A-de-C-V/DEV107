@@ -12,6 +12,8 @@ import com.example.deviceappend.core.network.RetrofitClient
 import com.example.deviceappend.core.network.UpdatePasswordRequest
 import com.example.deviceappend.core.session.SessionManager
 import com.example.deviceappend.databinding.FragmentChangePasswordBinding
+import com.example.deviceappend.utils.hideLoader
+import com.example.deviceappend.utils.showLoader
 import kotlinx.coroutines.launch
 
 class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
@@ -44,26 +46,24 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
         val email = session.getUsername() ?: ""
         val api = RetrofitClient.instance
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
+            binding.btnUpdatePassword.isEnabled = false // Evitar doble clic
+            showLoader("Asegurando nueva contraseña...")
+
             try {
-                // PASO 1: Obtener el Hash seguro
                 val hashRes = api.getPasswordHash(nuevaClave)
                 val hashGenerado = hashRes.body()?.get("hash")
 
                 if (hashRes.isSuccessful && hashGenerado != null) {
-
-                    // FALLBACK AUTOMÁTICO
-                    var appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                    val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
 
                     if (appAuth.isSuccessful && appAuth.body()?.data != null) {
-                        val tokenFresco = appAuth.body()?.data?.key ?: ""
-                        session.saveToken(tokenFresco)
-
+                        session.saveToken(appAuth.body()?.data?.key ?: "")
                         val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))
 
                         if (updateRes.isSuccessful) {
-                            Toast.makeText(context, "Contraseña actualizada. Inicie sesión.", Toast.LENGTH_LONG).show()
-                            (activity as? MainActivity)?.logout()
+                            Toast.makeText(context, "Contraseña actualizada exitosamente.", Toast.LENGTH_LONG).show()
+                            (activity as? MainActivity)?.logout() // Forzamos nuevo inicio de sesión limpio
                         } else {
                             Toast.makeText(context, "Error al actualizar en servidor", Toast.LENGTH_SHORT).show()
                         }
@@ -75,6 +75,9 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
                 }
             } catch (e: Exception) {
                 Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                hideLoader()
+                binding.btnUpdatePassword.isEnabled = true
             }
         }
     }

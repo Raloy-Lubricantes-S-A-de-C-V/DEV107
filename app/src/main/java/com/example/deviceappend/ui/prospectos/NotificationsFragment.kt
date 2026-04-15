@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -20,6 +21,9 @@ import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 import com.example.deviceappend.core.network.Notificacion
 import com.example.deviceappend.core.network.RetrofitClient
+import com.example.deviceappend.utils.checkconnect
+import com.example.deviceappend.utils.hideLoader
+import com.example.deviceappend.utils.showLoader
 import kotlinx.coroutines.launch
 
 class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
@@ -31,19 +35,27 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
 
         setupMenu()
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val res = RetrofitClient.instance.getProspectos()
-                if (res.isSuccessful) {
-                    val notifs = res.body()?.data?.filter { it.view == 0 && it.open == 1 }?.map {
-                        Notificacion(it.id, "Prospectos", "Nueva solicitud de técnico de: ${it.name}", false, it.id)
-                    } ?: emptyList()
+        // 1. APLICAMOS EL CORTAFUEGOS DE SEGURIDAD
+        checkconnect(view, "Cargando notificaciones...") {
+            viewLifecycleOwner.lifecycleScope.launch {
+                showLoader("Buscando alertas...")
+                try {
+                    val res = RetrofitClient.instance.getProspectos()
+                    if (res.isSuccessful) {
+                        val notifs = res.body()?.data?.filter { it.view == 0 && it.open == 1 }?.map {
+                            Notificacion(it.id, "Prospectos", "Nueva solicitud de técnico de: ${it.name}", false, it.id)
+                        } ?: emptyList()
 
-                    rv.adapter = NotificationsAdapter(notifs) {
-                        (activity as? MainActivity)?.replaceFragment(ProspectosFragment(), true)
+                        rv.adapter = NotificationsAdapter(notifs) {
+                            (activity as? MainActivity)?.replaceFragment(ProspectosFragment(), true)
+                        }
                     }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error al cargar notificaciones", Toast.LENGTH_SHORT).show()
+                } finally {
+                    hideLoader() // Siempre apagamos el loader al terminar
                 }
-            } catch (e: Exception) {}
+            }
         }
     }
 
@@ -63,18 +75,14 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
         private val list: List<Notificacion>,
         private val onClick: (Notificacion) -> Unit
     ) : RecyclerView.Adapter<NotificationsAdapter.VH>() {
-
         inner class VH(v: View) : RecyclerView.ViewHolder(v) {
-            val tvModulo = v.findViewById<TextView>(R.id.tvModulo)
-            val tvDesc = v.findViewById<TextView>(R.id.tvDescripcion)
-            val ivDot = v.findViewById<ImageView>(R.id.ivUnreadDot)
+            val tvModulo: TextView = v.findViewById(R.id.tvModulo)
+            val tvDesc: TextView = v.findViewById(R.id.tvDescripcion)
+            val ivDot: ImageView = v.findViewById(R.id.ivUnreadDot)
         }
-
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_notification, parent, false)
-            return VH(v)
+            return VH(LayoutInflater.from(parent.context).inflate(R.layout.item_notification, parent, false))
         }
-
         override fun onBindViewHolder(holder: VH, position: Int) {
             val n = list[position]
             holder.tvModulo.text = "Módulo: ${n.modulo}"
@@ -82,7 +90,6 @@ class NotificationsFragment : Fragment(R.layout.fragment_notifications) {
             holder.ivDot.visibility = if (n.isRead) View.INVISIBLE else View.VISIBLE
             holder.itemView.setOnClickListener { onClick(n) }
         }
-
         override fun getItemCount() = list.size
     }
 }
