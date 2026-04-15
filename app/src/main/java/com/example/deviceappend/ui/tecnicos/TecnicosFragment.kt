@@ -197,7 +197,7 @@ class TecnicosFragment : Fragment(R.layout.fragment_tecnicos) {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_back_to_login)?.isVisible = false
+                menu.findItem(R.id.action_logout)?.isVisible = false
 
                 // Ocultamos la opción de Técnicos porque ya estamos en esa pantalla
                 menu.findItem(R.id.action_tecnicos)?.isVisible = false

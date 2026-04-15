@@ -40,7 +40,7 @@ class WizardFragment : Fragment(R.layout.fragment_wizard) {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_back_to_login)?.isVisible = false
+                menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = true
                 menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true

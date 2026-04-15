@@ -1,8 +1,19 @@
 package com.example.deviceappend.ui.home
 
+import android.animation.ObjectAnimator
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -19,6 +30,7 @@ import com.example.deviceappend.ui.prospectos.ProspectosFragment
 import com.example.deviceappend.ui.tecnicos.TecnicosFragment
 import com.example.deviceappend.ui.wizard.WizardFragment
 import com.example.deviceappend.utils.checkconnect
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -57,15 +69,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
 
-                // Ocultar botones que no van en el Home
                 menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = false
 
-                // Buscar la campanita que ya existe en el XML
                 val notifItem = menu.findItem(R.id.action_notifications)
-                notifItem?.isVisible = sessionManager.isAdmin() // Ocultar campanita si es técnico normal
+                notifItem?.isVisible = sessionManager.isAdmin()
 
-                // Ejecutar conteo solo si es admin
                 if (sessionManager.isAdmin()) {
                     fetchNotificationsCount(notifItem)
                 }
@@ -73,7 +82,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
 
-                // Permisos DENTRO del menú de hamburguesa
                 menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
                 menu.findItem(R.id.action_tecnicos)?.isVisible = sessionManager.isAdmin()
                 menu.findItem(R.id.action_prospectos)?.isVisible = sessionManager.isAdmin()
@@ -119,15 +127,85 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     val count = res.body()!!.data.count { it.view == 0 && it.open == 1 }
                     if (count > 0) {
                         item?.title = "Notificaciones ($count)"
-                        item?.setIcon(android.R.drawable.ic_dialog_alert) // Cambia a icono de alerta
+
+                        // 1. Cambiamos la campana a color Amarillo
+                        val iconDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_popup_reminder)?.mutate()
+                        iconDrawable?.setTint(Color.parseColor("#FFC107")) // Amarillo
+                        item?.icon = iconDrawable
+
+                        // 2. Animación de campaneo (Temblor)
+                        // Añadimos un pequeño delay para asegurar que el menú ya se dibujó en la pantalla
+                        launch {
+                            delay(400)
+                            val actionView = requireActivity().findViewById<View>(R.id.action_notifications)
+                            if (actionView != null) {
+                                val animator = ObjectAnimator.ofFloat(actionView, "rotation", 0f, 25f, -25f, 25f, -25f, 0f)
+                                animator.duration = 800
+                                animator.repeatCount = 2 // Repetir la animación 2 veces
+                                animator.start()
+                            }
+                        }
+
+                        // 3. Emitir la notificación al sistema Android (Barra superior del celular)
+                        sendSystemNotification(count)
+
                     } else {
-                        item?.setIcon(android.R.drawable.ic_popup_reminder) // Campana normal
+                        item?.title = "Notificaciones"
+                        // Restaura el color blanco si no hay alertas
+                        val iconDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_popup_reminder)?.mutate()
+                        iconDrawable?.setTint(Color.WHITE)
+                        item?.icon = iconDrawable
                     }
                 }
             } catch(e: Exception) {
-                // Falla silenciosa si no hay red para no interrumpir el Home
+                // Silencioso si falla la red
             }
         }
+    }
+
+    private fun sendSystemNotification(count: Int) {
+        val context = requireContext()
+        val channelId = "prospectos_channel"
+
+        // En Android 13 o superior, se debe pedir permiso al usuario la primera vez
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requireActivity().requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+                return // Si no tenía permiso se lo pide y corta la ejecución por ahora.
+            }
+        }
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Crear el canal (Requisito obligatorio desde Android 8.0 Oreo)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Alertas de Prospectos",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificaciones sobre nuevas solicitudes de técnicos"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        // Crear un Intent para que al tocar la notificación en el celular, se abra la app
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+        // Construir la notificación visual
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_user) // Usamos un icono interno
+            .setContentTitle("Nueva Solicitud de Técnico")
+            .setContentText("Tienes $count solicitud(es) de prospectos pendientes de revisión.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true) // Se borra al tocarla
+
+        // Lanzar notificación
+        notificationManager.notify(1001, builder.build())
     }
 
     private fun setupClickListeners() {

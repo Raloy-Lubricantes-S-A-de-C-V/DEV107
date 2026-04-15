@@ -126,6 +126,7 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
 
         prospectoId = p.id
 
+        // Lo marcamos como visto inmediatamente
         if (p.view == 0) {
             viewLifecycleOwner.lifecycleScope.launch {
                 RetrofitClient.instance.marcarProspectoVisto(p.id)
@@ -144,6 +145,7 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             selectedLiderId = l.id
         }
 
+        // Restringir visualización de checks avanzados si el usuario no es 'Sys'
         if (!sessionManager.isSys()) {
             cbSys.visibility = View.GONE
             cbLider.visibility = View.GONE
@@ -171,14 +173,36 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
                     val res = RetrofitClient.instance.aprobarProspecto(prospectoId!!, req)
                     if (res.isSuccessful) {
                         val p = allProspectos.find { it.id == prospectoId }
-                        val msj = "Hola ${p?.name}, Tu cuenta ha sido aprobada.\nTu contraseña temporal es: ${p?.code}\nIngresa al Kiosko y cambia tu contraseña."
-                        RetrofitClient.instance.sendNewTechnicianWebhook(NewTechnicianWebhookRequest(p?.mail ?: "", msj))
+
+                        // ====================================================
+                        // FLÚJO N8N: ENVÍO DE CORREO AL NUEVO TÉCNICO
+                        // ====================================================
+                        val asunto = "Bienvenido a Raloy Asset Manager - Credenciales de Acceso"
+                        val msj = "Hola ${p?.name},\n\n" +
+                                "Tu solicitud para ingresar al sistema Raloy Asset Manager ha sido aprobada.\n\n" +
+                                "Para tu primer inicio de sesión, utiliza las siguientes credenciales:\n\n" +
+                                "• Usuario / Correo: ${p?.mail}\n" +
+                                "• Contraseña Temporal: ${p?.code}\n\n" +
+                                "Por razones de seguridad, el sistema te pedirá cambiar tu contraseña inmediatamente después de ingresar por primera vez.\n\n" +
+                                "Saludos cordiales,\nEquipo de TI Raloy."
+
+                        try {
+                            val webhookReq = NewTechnicianWebhookRequest(email = p?.mail ?: "", mensaje = msj, asunto = asunto)
+                            RetrofitClient.instance.sendNewTechnicianWebhook(webhookReq)
+                        } catch (e: Exception) {
+                            Log.e("Prospectos", "Fallo silencioso al enviar correo n8n: ${e.message}")
+                        }
+                        // ====================================================
 
                         Toast.makeText(context, "Prospecto Aprobado y Rol Creado", Toast.LENGTH_LONG).show()
                         clearForm()
                         loadData()
+                    } else {
+                        Toast.makeText(context, "Error en el servidor al aprobar", Toast.LENGTH_SHORT).show()
                     }
-                } catch (e: Exception) { Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show() }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -202,6 +226,10 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
         actvLider.setText("", false)
         selectedEmpresasIds.clear()
         rvEmpresasCheck.adapter?.notifyDataSetChanged()
+        cbSys.isChecked = false
+        cbAdmin.isChecked = false
+        cbLider.isChecked = false
+        cbNormal.isChecked = true
     }
 
     private fun setupMenu() {
@@ -210,7 +238,12 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
+
+                // Limpiamos los ítems innecesarios y dejamos la flecha de regreso al Home
                 menu.findItem(R.id.action_home)?.isVisible = true
+                menu.findItem(R.id.action_logout)?.isVisible = false
+                menu.findItem(R.id.action_notifications)?.isVisible = false
+                menu.findItem(R.id.action_modules)?.isVisible = false
             }
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
@@ -240,7 +273,9 @@ class ProspectosFragment : Fragment(R.layout.fragment_prospectos) {
             val p = list[position]
             holder.tvNombre.text = p.name
             holder.tvMail.text = p.mail
-            holder.tvFecha.text = "Fecha: ${p.create_day}"
+
+            // La fecha viene del campo create_day
+            holder.tvFecha.text = "Fecha de Solicitud: ${p.create_day ?: "N/A"}"
 
             var estado = "DESCONOCIDO"
             var color = Color.GRAY

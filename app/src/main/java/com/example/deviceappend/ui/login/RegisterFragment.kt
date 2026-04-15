@@ -120,7 +120,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 menu.findItem(R.id.action_home)?.isVisible = false
                 menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_modules)?.isVisible = false
-                menu.findItem(R.id.action_back_to_login)?.isVisible = true
+                menu.findItem(R.id.action_logout)?.isVisible = true
             }
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
