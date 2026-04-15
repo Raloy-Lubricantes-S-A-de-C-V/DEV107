@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.deviceappend.R
+// ESTA ES LA LÍNEA QUE FALTABA PARA QUE RECONOZCA EL MODELO
 import com.example.deviceappend.core.network.Empresa
 
 class EmpresasAdapter(
@@ -27,7 +28,7 @@ class EmpresasAdapter(
     override fun onBindViewHolder(holder: EmpresaViewHolder, position: Int) {
         val empresa = empresasList[position]
 
-        // Limpiamos los espacios en blanco que deja PostgreSQL en columnas CHAR
+        // Limpiamos los espacios en blanco que deja la base de datos en columnas CHAR
         val desc = empresa.descripcio?.trim() ?: "Sin descripción"
         val cve = empresa.cveempresa?.trim() ?: "N/A"
         val rfc = empresa.rfc?.trim() ?: "N/A"

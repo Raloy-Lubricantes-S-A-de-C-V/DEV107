@@ -38,6 +38,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 val api = RetrofitClient.instance
                 val session = SessionManager(requireContext())
 
+                // 1. Usando el endpoint único y correcto
                 val authRes = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
 
                 if (authRes.isSuccessful && authRes.body()?.data != null) {
@@ -45,7 +46,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                     session.saveToken(token)
                     cargarLideres()
                 } else {
-                    Log.e("DEBUG_REGISTRO", "Fallo Auth: ${authRes.code()}")
+                    Log.e("DEBUG_REGISTRO", "Fallo Auth: HTTP ${authRes.code()}")
+                    Toast.makeText(context, "Error de seguridad (HTTP ${authRes.code()})", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Log.e("DEBUG_REGISTRO", "Excepción Auth: ${e.message}")
@@ -58,20 +60,13 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             val response = RetrofitClient.instance.listUsers()
             if (response.isSuccessful && response.body()?.error == false) {
                 val allUsers = response.body()!!.data
-
-                leaderList = allUsers.filter {
-                    val valLider = it.lider.toString().lowercase()
-                    valLider == "1" || valLider == "1.0" || valLider == "true"
-                }
-
+                leaderList = allUsers.filter { it.lider == 1 }
                 val names = leaderList.map { it.name }
                 val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, names)
                 binding.actvLeader.setAdapter(adapter)
-
-                binding.actvLeader.setText("", false)
             }
         } catch (e: Exception) {
-            Log.e("DEBUG_REGISTRO", "Error de red al listar: ${e.message}")
+            Log.e("DEBUG_REGISTRO", "Error al listar líderes: ${e.message}")
         }
     }
 
@@ -98,7 +93,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                     try {
                         if (leaderEmail.isNotEmpty()) {
                             val mensaje = "Hola ${leader?.name},\n\nEl usuario $name con correo $mail ha intentado ingresar como nuevo técnico y te ha seleccionado como su líder.\n\nEs necesario que ingreses a la aplicación Raloy Asset Manager en el módulo de autorización para aceptar su cuenta."
-
                             val webhookReq = NewTechnicianWebhookRequest(email = leaderEmail, mensaje = mensaje)
                             RetrofitClient.instance.sendNewTechnicianWebhook(webhookReq)
                         }
@@ -118,13 +112,13 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     }
 
     private fun setupRegisterMenu() {
+        // CORRECCIÓN: Se agregó explícitamente "MenuHost ="
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.main_menu, menu)
                 menu.findItem(R.id.action_home)?.isVisible = false
                 menu.findItem(R.id.action_logout)?.isVisible = false
-                // OCULTAMOS LA HAMBURGUESA EN REGISTRO
                 menu.findItem(R.id.action_modules)?.isVisible = false
                 menu.findItem(R.id.action_back_to_login)?.isVisible = true
             }

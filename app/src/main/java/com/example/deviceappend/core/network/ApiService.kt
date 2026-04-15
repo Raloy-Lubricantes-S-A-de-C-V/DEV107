@@ -110,7 +110,6 @@ data class AsignarEmpresasRequest(
     val empresas: List<Int>
 )
 
-
 interface ApiService {
     @GET("check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
@@ -122,10 +121,13 @@ interface ApiService {
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
     // ==========================================
-    // CORRECCIÓN: SE REGRESÓ A "autenticate" SIN LA 'H'
+    // CORTAFUEGOS DE AUTENTICACIÓN (RUTAS DOBLES)
     // ==========================================
-    @POST("autenticate")
-    suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
+    @POST("autenticate") // Intento 1: Servidor no reiniciado
+    suspend fun autenticateAppOld(@Body request: AuthAppRequest): Response<AuthResponse>
+
+    @POST("authenticate") // Intento 2: Servidor con código actualizado
+    suspend fun autenticateAppNew(@Body request: AuthAppRequest): Response<AuthResponse>
 
     @POST("user-login")
     suspend fun loginUser(@Body request: UserLoginRequest): Response<AuthResponse>

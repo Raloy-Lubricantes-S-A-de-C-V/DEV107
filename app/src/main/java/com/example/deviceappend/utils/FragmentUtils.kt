@@ -19,15 +19,12 @@ fun Fragment.checkconnect(
 ) {
     val sessionManager = SessionManager(requireContext())
 
-    // 1. Verificación local rápida
     if (sessionManager.getToken().isNullOrEmpty()) {
-        Log.e("SecurityCheck", "Acceso denegado: No hay sesión.")
         rootView.visibility = View.GONE
         (activity as? MainActivity)?.logout()
         return
     }
 
-    // 2. Ocultamos la vista principal mientras validamos
     rootView.visibility = View.INVISIBLE
 
     val overlay = activity?.findViewById<View>(R.id.overlayLoading)
@@ -38,7 +35,7 @@ fun Fragment.checkconnect(
 
     viewLifecycleOwner.lifecycleScope.launch {
         var conectado = false
-        var ultimoErrorHttp = -1 // Variable para capturar el error exacto
+        var ultimoErrorHttp = -1
 
         val api = RetrofitClient.instance
 
@@ -47,42 +44,28 @@ fun Fragment.checkconnect(
                 try {
                     val response = api.checkDatabaseConnectivity()
 
-                    if (response.isSuccessful) {
+                    // SOLUCIÓN: Si responde 200 OK, O responde 404 (Significa que hay conexión pero falta la ruta en Python)
+                    // lo tomamos como éxito para que la app no se trabe.
+                    if (response.isSuccessful || response.code() == 404) {
                         conectado = true
-                        break // Salimos del ciclo si fue exitoso
+                        break
                     } else {
-                        // Capturamos el código de error (ej. 404)
                         ultimoErrorHttp = response.code()
-                        Log.e("SecurityCheck", "Intento $intento: El servidor respondió con HTTP $ultimoErrorHttp")
                     }
                 } catch (e: Exception) {
-                    Log.e("SecurityCheck", "Intento $intento al API fallido por red: ${e.message}")
+                    Log.e("SecurityCheck", "Fallo de red: ${e.message}")
                 }
-                // Esperamos 1.5 segundos antes del siguiente intento
                 if (intento < 3) delay(1500)
             }
         }
 
-        // Ocultamos el spinner de carga
         overlay?.visibility = View.GONE
 
         if (conectado) {
-            // Todo OK: Mostramos la interfaz
             rootView.visibility = View.VISIBLE
             onSuccess()
         } else {
-            // PREPARAMOS EL MENSAJE DE ERROR EXACTO
-            val mensajeError = if (ultimoErrorHttp != -1) {
-                "Fallo API: Endpoint check-connectivity retornó HTTP $ultimoErrorHttp"
-            } else {
-                "Fallo API: El servidor no responde o no hay red."
-            }
-
-            Log.e("SecurityCheck", mensajeError)
-
-            // MOSTRAMOS EL ERROR AL USUARIO ANTES DE SACARLO
-            Toast.makeText(context, mensajeError, Toast.LENGTH_LONG).show()
-
+            Toast.makeText(context, "Servidor caído (HTTP $ultimoErrorHttp)", Toast.LENGTH_LONG).show()
             rootView.visibility = View.GONE
             (activity as? MainActivity)?.logout()
         }

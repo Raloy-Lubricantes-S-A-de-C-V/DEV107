@@ -46,22 +46,21 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
         lifecycleScope.launch {
             try {
-                // PASO 1: Obtener el Hash seguro
                 val hashRes = api.getPasswordHash(nuevaClave)
                 val hashGenerado = hashRes.body()?.get("hash")
 
                 if (hashRes.isSuccessful && hashGenerado != null) {
 
-                    // PASO 2: Re-autenticar App para obtener token fresco antes del update
-                    val appAuth = api.autenticateApp(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                    // FALLBACK AUTOMÁTICO
+                    var appAuth = api.autenticateAppOld(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                    if (appAuth.code() == 404) {
+                        appAuth = api.autenticateAppNew(AuthAppRequest("app-movile-001", "Zsh4cvz4tvGyQa56P"))
+                    }
 
                     if (appAuth.isSuccessful && appAuth.body()?.data != null) {
-
-                        // CORRECCIÓN: Manejo seguro de nulos
                         val tokenFresco = appAuth.body()?.data?.key ?: ""
                         session.saveToken(tokenFresco)
 
-                        // PASO 3: Mandar el Hash obtenido al endpoint update-password
                         val updateRes = api.updatePassword(UpdatePasswordRequest(email, hashGenerado))
 
                         if (updateRes.isSuccessful) {
