@@ -58,7 +58,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menuInflater.inflate(R.menu.main_menu, menu)
 
                 // Ocultar botones que no van en el Home
-                menu.findItem(R.id.action_back_to_login)?.isVisible = false
+                menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = false
 
                 // Buscar la campanita que ya existe en el XML
