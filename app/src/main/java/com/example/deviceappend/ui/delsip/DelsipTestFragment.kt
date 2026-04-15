@@ -88,26 +88,24 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             showLoader("Buscando e importando fotografía...")
-            ivTestImage.visibility = View.GONE // Ocultar imagen previa si la hay
+            ivTestImage.visibility = View.GONE
 
             try {
                 val response = RetrofitClient.instance.testDelsipImage(nomina)
 
                 if (response.isSuccessful && response.body()?.error == false) {
-                    val base64Data = response.body()?.data
+
+                    // CORRECCIÓN EXACTA APLICADA AQUÍ: Extraemos el Base64 desde el sub-objeto
+                    val base64Data = response.body()?.data?.imageBase64
 
                     if (!base64Data.isNullOrEmpty()) {
-                        // 1. Limpiar prefijos de imagen web si la API los manda por error ("data:image/jpeg;base64,")
                         val cleanBase64 = if (base64Data.contains(",")) {
                             base64Data.substringAfter(",")
                         } else {
                             base64Data
                         }
 
-                        // 2. Decodificar el texto Base64 a un arreglo de bytes
                         val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-
-                        // 3. Transformar los bytes en un Bitmap dibujable
                         val decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 
                         if (decodedImage != null) {

@@ -4,8 +4,18 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.*
 
-data class AuthAppRequest(val username: String, val password: String)
-data class UserLoginRequest(val username: String, val password: String)
+// ==========================================
+// 1. MODELOS DE AUTENTICACIÓN (RESTAURADOS Y BLINDADOS)
+// ==========================================
+data class AuthAppRequest(
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String
+)
+
+data class UserLoginRequest(
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String
+)
 
 data class UserProfile(
     @SerializedName("id") val id: Int?,
@@ -25,10 +35,18 @@ data class AuthData(
     @SerializedName("profile") val profile: UserProfile?
 )
 
-data class AuthResponse(val status: Int, val data: AuthData?)
+data class AuthResponse(
+    @SerializedName("status") val status: Int,
+    @SerializedName("data") val data: AuthData?
+)
 
-data class CheckSysAdminRequest(val user: String)
-data class CheckSysAdminResponse(val is_sys: Boolean)
+data class CheckSysAdminRequest(
+    @SerializedName("user") val user: String
+)
+
+data class CheckSysAdminResponse(
+    @SerializedName("is_sys") val is_sys: Boolean
+)
 
 data class UserListItem(
     @SerializedName("id") val id: Int,
@@ -37,13 +55,33 @@ data class UserListItem(
     @SerializedName("lider") val lider: Int
 )
 
-data class UserListResponse(val error: Boolean, val data: List<UserListItem>)
+data class UserListResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<UserListItem>
+)
 
-data class RegisterRequest(val name: String, val mail: String, val parent_id: Int, val code: Int)
-data class RegisterResponse(val error: Boolean, val id_request: Int? = null, val msj: String)
+data class RegisterRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("mail") val mail: String,
+    @SerializedName("parent_id") val parent_id: Int,
+    @SerializedName("code") val code: Int
+)
 
-data class UpdatePasswordRequest(val username: String, val hash: String)
-data class RecoveryEmailRequest(val email: String, val salt: String)
+data class RegisterResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("id_request") val id_request: Int? = null,
+    @SerializedName("msj") val msj: String
+)
+
+data class UpdatePasswordRequest(
+    @SerializedName("username") val username: String,
+    @SerializedName("hash") val hash: String
+)
+
+data class RecoveryEmailRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("salt") val salt: String
+)
 
 data class NewTechnicianWebhookRequest(
     @SerializedName("email") val email: String,
@@ -51,6 +89,9 @@ data class NewTechnicianWebhookRequest(
     @SerializedName("asunto") val asunto: String? = null
 )
 
+// ==========================================
+// MODELOS PARA EMPRESAS
+// ==========================================
 data class Empresa(
     @SerializedName("id") val id: Int,
     @SerializedName("cveempresa") val cveempresa: String?,
@@ -64,42 +105,90 @@ data class Empresa(
     @SerializedName("rfc") val rfc: String?
 )
 
-data class EmpresaListResponse(val error: Boolean, val data: List<Empresa>)
-data class EmpresaRequest(
-    val cveempresa: String, val descripcio: String, val calle: String,
-    val noextint: String, val colonia: String, val codpostal: Int?,
-    val poblacion: String, val cveentfed: String, val rfc: String
+data class EmpresaListResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<Empresa>
 )
-data class EmpresaResponse(val error: Boolean, val id: Any? = null, val msj: String? = null)
 
+data class EmpresaRequest(
+    @SerializedName("cveempresa") val cveempresa: String,
+    @SerializedName("descripcio") val descripcio: String,
+    @SerializedName("calle") val calle: String,
+    @SerializedName("noextint") val noextint: String,
+    @SerializedName("colonia") val colonia: String,
+    @SerializedName("codpostal") val codpostal: Int?,
+    @SerializedName("poblacion") val poblacion: String,
+    @SerializedName("cveentfed") val cveentfed: String,
+    @SerializedName("rfc") val rfc: String
+)
+
+data class EmpresaResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("id") val id: Any? = null,
+    @SerializedName("msj") val msj: String? = null
+)
+
+// ==========================================
+// MODELOS PARA TÉCNICOS Y ASIGNACIÓN
+// ==========================================
 data class TecnicoConEmpresas(
     @SerializedName("id_usuario") val idUsuario: Int,
     @SerializedName("nombre") val nombre: String?,
     @SerializedName("empresas") val empresas: List<Int>?
 )
 
-data class TecnicosListResponse(val error: Boolean, val data: List<TecnicoConEmpresas>)
-data class AsignarEmpresasRequest(val empresas: List<Int>)
-
-data class Prospecto(
-    val id: Int, val name: String?, val mail: String?,
-    val create_day: String?, val view: Int, val acepted: Int,
-    val declined: Int, val open: Int, val code: Int?, val parent_id: Int?
+data class TecnicosListResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<TecnicoConEmpresas>
 )
 
-data class ProspectoListResponse(val error: Boolean, val data: List<Prospecto>)
+data class AsignarEmpresasRequest(
+    @SerializedName("empresas") val empresas: List<Int>
+)
+
+// ==========================================
+// MODELOS DE PROSPECTOS Y NOTIFICACIONES
+// ==========================================
+data class Prospecto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String?,
+    @SerializedName("mail") val mail: String?,
+    @SerializedName("create_day") val create_day: String?,
+    @SerializedName("view") val view: Int,
+    @SerializedName("acepted") val acepted: Int,
+    @SerializedName("declined") val declined: Int,
+    @SerializedName("open") val open: Int,
+    @SerializedName("code") val code: Int?,
+    @SerializedName("parent_id") val parent_id: Int?
+)
+
+data class ProspectoListResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<Prospecto>
+)
 
 data class AprobarProspectoRequest(
-    val name: String, val mail: String, val parent_id: Int,
-    val sys: Int, val admin: Int, val normal: Int, val lider: Int,
-    val empresas: List<Int>
+    @SerializedName("name") val name: String,
+    @SerializedName("mail") val mail: String,
+    @SerializedName("parent_id") val parent_id: Int,
+    @SerializedName("sys") val sys: Int,
+    @SerializedName("admin") val admin: Int,
+    @SerializedName("normal") val normal: Int,
+    @SerializedName("lider") val lider: Int,
+    @SerializedName("empresas") val empresas: List<Int>
 )
 
 data class Notificacion(
-    val id: Int, val modulo: String, val descripcion: String,
-    val isRead: Boolean, val prospectoId: Int
+    val id: Int,
+    val modulo: String,
+    val descripcion: String,
+    val isRead: Boolean,
+    val prospectoId: Int
 )
 
+// ==========================================
+// MODELOS DELSIP
+// ==========================================
 data class DelsipEmpresa(
     @SerializedName("cveempresa") val cveempresa: String
 )
@@ -109,14 +198,15 @@ data class DelsipTestResponse(
     @SerializedName("data") val data: List<DelsipEmpresa>
 )
 
-data class DelsipImage(
-    @SerializedName("image_base64") val imageBase64: String,
-    @SerializedName("filename") val filename: String
+data class DelsipImageData(
+    @SerializedName("filename") val filename: String?,
+    @SerializedName("image_base64") val imageBase64: String?
 )
+
 data class DelsipImageResponse(
-    val error: Boolean,
-    val data: DelsipImage?,
-    val msj: String?
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: DelsipImageData?,
+    @SerializedName("msj") val msj: String?
 )
 
 interface ApiService {
@@ -129,9 +219,9 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    // ==========================================
-    // MÉTODO CORRECTO Y ÚNICO DE AUTENTICACIÓN
-    // ==========================================
+    // ------------------------------------------
+    // ENDPOINTS DE AUTENTICACIÓN
+    // ------------------------------------------
     @POST("authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
@@ -153,6 +243,9 @@ interface ApiService {
     @POST("https://n8n.raloy.com.mx/webhook/nuevo-tecnico")
     suspend fun sendNewTechnicianWebhook(@Body request: NewTechnicianWebhookRequest): Response<Unit>
 
+    // ------------------------------------------
+    // ENDPOINTS EMPRESAS
+    // ------------------------------------------
     @GET("empresas")
     suspend fun getEmpresas(): Response<EmpresaListResponse>
 
@@ -162,12 +255,18 @@ interface ApiService {
     @PUT("empresas/{id}")
     suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
 
+    // ------------------------------------------
+    // ENDPOINTS TÉCNICOS
+    // ------------------------------------------
     @GET("tecnicos/empresas")
     suspend fun getTecnicosConEmpresas(): Response<TecnicosListResponse>
 
     @PUT("tecnicos/{id_usuario}/empresas")
     suspend fun asignarEmpresasATecnico(@Path("id_usuario") idUsuario: Int, @Body request: AsignarEmpresasRequest): Response<EmpresaResponse>
 
+    // ------------------------------------------
+    // ENDPOINTS PROSPECTOS
+    // ------------------------------------------
     @GET("prospectos")
     suspend fun getProspectos(): Response<ProspectoListResponse>
 
@@ -180,12 +279,12 @@ interface ApiService {
     @POST("prospectos/{id}/aprobar")
     suspend fun aprobarProspecto(@Path("id") id: Int, @Body req: AprobarProspectoRequest): Response<Map<String, Any>>
 
-    // ==========================================
-    // ENDPOINTS DE PRUEBA DELSIP
-    // ==========================================
+    // ------------------------------------------
+    // ENDPOINTS DELSIP
+    // ------------------------------------------
     @GET("delsip/test")
     suspend fun testDelsipConnection(): Response<DelsipTestResponse>
 
     @GET("delsip/testimage")
-    suspend fun getDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
+    suspend fun testDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
 }
