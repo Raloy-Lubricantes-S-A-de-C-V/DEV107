@@ -96,7 +96,6 @@ interface ApiService {
     @GET("users/list") suspend fun listUsers(): Response<UserListResponse>
     @POST("register-request") suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    // MÉTODO DE AUTENTICACIÓN
     @POST("authenticate") suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
     @POST("user-login") suspend fun loginUser(@Body request: UserLoginRequest): Response<AuthResponse>
@@ -121,7 +120,9 @@ interface ApiService {
     @GET("delsip/test") suspend fun testDelsipConnection(): Response<DelsipTestResponse>
     @GET("delsip/testimage") suspend fun testDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
 
+    // ------------------------------------------
     // ENDPOINTS ENROLAMIENTO (HELPDESK) Y BIOMETRÍA
+    // ------------------------------------------
     @GET("delsip/empleado/{nomina}") suspend fun getEmployeeByNomina(@Path("nomina") nomina: String): Response<EmployeeResponse>
     @POST("https://n8n.raloy.com.mx/webhook/ai-analizar-foto") suspend fun analyzePhotoAi(@Body req: AiPhotoRequest): Response<AiPhotoResponse>
     @POST("delsip/candidatos") suspend fun searchCandidates(@Body req: CandidateSearchRequest): Response<CandidateSearchResponse>
