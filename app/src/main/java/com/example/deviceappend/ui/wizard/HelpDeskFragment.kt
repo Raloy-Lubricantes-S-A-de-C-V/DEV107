@@ -2,25 +2,28 @@ package com.example.deviceappend.ui.wizard
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import android.view.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 
-// IMPORTANTE: Importamos todos los modelos de red de golpe
 import com.example.deviceappend.core.network.*
 
 import com.example.deviceappend.utils.checkconnect
@@ -50,6 +53,7 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
     private var currentNomina: String = ""
     private var employeeDataCache: EmployeeData? = null
 
+    // Lanzador para capturar la imagen de la cámara
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val imageBitmap = result.data?.extras?.get("data") as? Bitmap
@@ -59,6 +63,15 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
                 btnProcesarIA.visibility = View.VISIBLE
                 currentBase64Photo = bitmapToBase64(it)
             }
+        }
+    }
+
+    // Lanzador para pedir permisos de cámara en tiempo de ejecución
+    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            openCamera() // Si el usuario acepta, abrimos la cámara
+        } else {
+            Toast.makeText(context, "Se necesita permiso de cámara para esta función", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -102,8 +115,7 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
         }
 
         view.findViewById<MaterialButton>(R.id.btnTomarFoto).setOnClickListener {
-            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            takePictureLauncher.launch(cameraIntent)
+            checkCameraPermissionAndOpen()
         }
 
         view.findViewById<MaterialButton>(R.id.btnBuscarNomina).setOnClickListener {
@@ -175,6 +187,21 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
                 }
             }
         }
+    }
+
+    // Comprueba el permiso antes de intentar abrir la cámara
+    private fun checkCameraPermissionAndOpen() {
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            openCamera() // Ya tiene permiso, procedemos
+        } else {
+            // Lanza el diálogo del sistema pidiendo permiso al usuario
+            requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun openCamera() {
+        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        takePictureLauncher.launch(cameraIntent)
     }
 
     private fun fetchEmployeeData(nomina: String) {
