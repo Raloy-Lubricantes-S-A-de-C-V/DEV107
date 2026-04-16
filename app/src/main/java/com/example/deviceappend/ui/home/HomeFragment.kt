@@ -70,7 +70,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
 
-                menu.findItem(R.id.action_logout)?.isVisible = false
                 menu.findItem(R.id.action_home)?.isVisible = false
 
                 val notifItem = menu.findItem(R.id.action_notifications)
@@ -86,8 +85,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
                 menu.findItem(R.id.action_tecnicos)?.isVisible = sessionManager.isAdmin()
                 menu.findItem(R.id.action_prospectos)?.isVisible = sessionManager.isAdmin()
-                // MOSTRAR LA NUEVA OPCIÓN DELSIP
-                menu.findItem(R.id.action_delsip_test)?.isVisible = sessionManager.isAdmin() || sessionManager.isSys()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -108,17 +105,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         (activity as? MainActivity)?.replaceFragment(EmpresasFragment(), true)
                         true
                     }
-                    R.id.action_delsip_test -> {
-                        // NAVEGACIÓN AL NUEVO MÓDULO
-                        (activity as? MainActivity)?.replaceFragment(DelsipTestFragment(), true)
-                        true
-                    }
                     R.id.action_new_scanner -> {
                         (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
-                        true
-                    }
-                    R.id.action_new_metrics -> {
-                        Toast.makeText(context, "Módulo de Reportes en construcción", Toast.LENGTH_SHORT).show()
                         true
                     }
                     else -> false

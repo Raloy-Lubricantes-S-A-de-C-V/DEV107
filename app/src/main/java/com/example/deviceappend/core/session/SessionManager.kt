@@ -8,6 +8,9 @@ import com.example.deviceappend.core.network.UserProfile
 
 class SessionManager(context: Context) {
 
+    // ==========================================
+    // SEGURIDAD: SharedPreferences Encriptadas (RESTAURADO)
+    // ==========================================
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
@@ -41,25 +44,32 @@ class SessionManager(context: Context) {
         prefs.edit().putString(KEY_USERNAME, username).apply()
     }
 
-    // GUARDAMOS EL PERFIL COMPLETO DESDE EL LOGIN (CORREGIDO CON ELVIS OPERATOR ?:)
+    // ==========================================
+    // GUARDADO DEL PERFIL COMPLETO (RESTAURADO)
+    // ==========================================
     fun saveUserProfile(profile: UserProfile) {
         prefs.edit().apply {
-            // El operador ?: le da un valor por defecto si la variable viene nula desde el API
             putInt(KEY_USER_ID, profile.id ?: -1)
             putString(KEY_USERNAME, profile.user ?: "")
             putString(KEY_NAME, profile.name ?: "")
             putInt(KEY_LIDER, profile.lider ?: 0)
             putInt(KEY_SYS, profile.sys ?: 0)
             putInt(KEY_ADMIN, profile.admin ?: 0)
-            putInt(KEY_NORMAL, profile.normal ?: 1) // 1 asumiendo que al menos es usuario normal
+            putInt(KEY_NORMAL, profile.normal ?: 1)
             apply()
         }
     }
 
+    // ==========================================
+    // GETTERS PARA HOME Y OTROS FRAGMENTS (RESTAURADOS)
+    // ==========================================
     fun getUid(): Int = prefs.getInt(KEY_USER_ID, -1)
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
     fun getName(): String? = prefs.getString(KEY_NAME, null)
 
+    // ==========================================
+    // VERIFICACIÓN DE ROLES (INCLUYE isSys)
+    // ==========================================
     fun isSys(): Boolean = prefs.getInt(KEY_SYS, 0) == 1
     fun isLider(): Boolean = prefs.getInt(KEY_LIDER, 0) == 1
     fun isAdmin(): Boolean = prefs.getInt(KEY_ADMIN, 0) == 1

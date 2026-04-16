@@ -10,33 +10,31 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="20dp"
             android:text="Gestión de Prospectos"
             android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textColor="@color/primary"
+            android:textColor="?attr/colorPrimary"
             android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardFormulario"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="28dp"
             app:cardBackgroundColor="@android:color/white"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#D3D3D3"
-            app:strokeWidth="1dp">
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -53,7 +51,7 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="12dp"
                     android:hint="Correo Institucional">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etMail"
@@ -65,7 +63,7 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="12dp"
                     android:hint="Líder a Cargo">
                     <AutoCompleteTextView
                         android:id="@+id/actvLider"
@@ -77,18 +75,18 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     android:orientation="horizontal">
-                    <CheckBox android:id="@+id/cbNormal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Normal" android:checked="true" />
-                    <CheckBox android:id="@+id/cbAdmin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Admin" />
-                    <CheckBox android:id="@+id/cbSys" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Sys" />
-                    <CheckBox android:id="@+id/cbLider" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Líder" />
+                    <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbNormal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Normal" android:checked="true" />
+                    <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbAdmin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Admin" />
+                    <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbSys" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Sys" />
+                    <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbLider" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Líder" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:text="Asignar Empresas:"
                     android:textStyle="bold" />
 
@@ -96,14 +94,14 @@
                     android:id="@+id/rvEmpresasCheck"
                     android:layout_width="match_parent"
                     android:layout_height="150dp"
-                    android:background="#F8F9FA"
+                    android:background="@android:color/transparent"
                     android:nestedScrollingEnabled="true"
-                    android:padding="8dp" />
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="24dp"
                     android:orientation="horizontal"
                     android:weightSum="2">
 
@@ -116,6 +114,7 @@
                         android:layout_weight="1"
                         android:text="DECLINAR"
                         app:backgroundTint="#FFEBEE"
+                        android:textColor="#D32F2F"
                         app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -126,6 +125,7 @@
                         android:layout_weight="1"
                         android:text="APROBAR"
                         app:backgroundTint="#4CAF50"
+                        android:textColor="@android:color/white"
                         app:cornerRadius="12dp" />
                 </LinearLayout>
             </LinearLayout>
@@ -134,7 +134,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="12dp"
             android:text="Listado de Solicitudes"
             android:textAppearance="?attr/textAppearanceTitleMedium"
             android:textStyle="bold" />

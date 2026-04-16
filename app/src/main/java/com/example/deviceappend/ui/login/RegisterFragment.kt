@@ -28,7 +28,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentRegisterBinding.bind(view)
 
-        setupRegisterMenu()
+        // Ocultar menú superior en la pantalla de registro
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.hide()
         autenticarYListar()
 
         binding.btnRegister.setOnClickListener { ejecutarRegistro() }
@@ -112,22 +113,12 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
-    private fun setupRegisterMenu() {
-        val menuHost: MenuHost = requireActivity()
-        menuHost.addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_home)?.isVisible = false
-                menu.findItem(R.id.action_logout)?.isVisible = false
-                menu.findItem(R.id.action_modules)?.isVisible = false
-                menu.findItem(R.id.action_logout)?.isVisible = true
-            }
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Restaurar menú superior al salir
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.show()
         _binding = null
     }
 }

@@ -28,7 +28,8 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentForgotPasswordBinding.bind(view)
 
-        setupRecoveryMenu()
+        // Ocultar menú superior en la pantalla de recuperación de contraseña
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.hide()
 
         binding.btnSendEmail.setOnClickListener {
             hideKeyboard()
@@ -71,20 +72,7 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
         }
     }
 
-    private fun setupRecoveryMenu() {
-        val menuHost: MenuHost = requireActivity()
-        menuHost.addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_home)?.isVisible = false
-                menu.findItem(R.id.action_logout)?.isVisible = false
-                // OCULTAMOS LA HAMBURGUESA EN RECUPERACIÓN DE CONTRASEÑA
-                menu.findItem(R.id.action_modules)?.isVisible = false
-                menu.findItem(R.id.action_logout)?.isVisible = true
-            }
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-    }
+
 
     private fun hideKeyboard() {
         val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -93,6 +81,8 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgot_password) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Restaurar menú superior al salir
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.show()
         _binding = null
     }
 }

@@ -222,26 +222,15 @@ class EmpresasFragment : Fragment(R.layout.fragment_empresas) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
 
-                menu.findItem(R.id.action_logout)?.isVisible = false
-                menu.findItem(R.id.action_empresas)?.isVisible = false
+                menu.findItem(R.id.action_notifications)?.isVisible = false
+                menu.findItem(R.id.action_modules)?.isVisible = false
 
                 menu.findItem(R.id.action_home)?.isVisible = true
-                menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
-                    R.id.action_new_scanner -> {
-                        (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
-                        true
-                    }
-                    R.id.action_new_metrics -> {
-                        Toast.makeText(context, "Módulo de Reportes en construcción", Toast.LENGTH_SHORT).show()
-                        true
-                    }
-                    else -> false
-                }
+                return false
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 

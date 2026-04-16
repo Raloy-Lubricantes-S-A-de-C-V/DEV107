@@ -25,6 +25,9 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentChangePasswordBinding.bind(view)
 
+        // Ocultar menú superior
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.hide()
+
         binding.btnUpdatePassword.setOnClickListener {
             val pass1 = binding.etNewPassword.text.toString()
             val pass2 = binding.etConfirmPassword.text.toString()
@@ -84,6 +87,8 @@ class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Restaurar menú superior al salir
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.show()
         _binding = null
     }
 }

@@ -197,32 +197,16 @@ class TecnicosFragment : Fragment(R.layout.fragment_tecnicos) {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
-                menu.findItem(R.id.action_logout)?.isVisible = false
 
-                // Ocultamos la opción de Técnicos porque ya estamos en esa pantalla
-                menu.findItem(R.id.action_tecnicos)?.isVisible = false
+                menu.findItem(R.id.action_notifications)?.isVisible = false
+                menu.findItem(R.id.action_modules)?.isVisible = false
 
-                // Mostrar siempre el Home, Módulos y Logout
                 menu.findItem(R.id.action_home)?.isVisible = true
-                menu.findItem(R.id.action_modules)?.isVisible = true
                 menu.findItem(R.id.action_logout)?.isVisible = true
-
-                // La opción de crear empresas se muestra si el Admin también es Sys
-                menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
-                    R.id.action_empresas -> {
-                        (activity as? MainActivity)?.replaceFragment(EmpresasFragment(), true)
-                        true
-                    }
-                    R.id.action_new_scanner -> {
-                        (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
-                        true
-                    }
-                    else -> false
-                }
+                return false
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
         requireActivity().invalidateOptionsMenu()

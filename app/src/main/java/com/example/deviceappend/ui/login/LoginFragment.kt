@@ -27,6 +27,9 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLoginBinding.bind(view)
 
+        // Ocultar menú superior en la pantalla de login
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.hide()
+
         binding.btnLogin.setOnClickListener {
             val user = binding.etUsername.text.toString().trim()
             val pass = binding.etPassword.text.toString().trim()
@@ -78,6 +81,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Restaurar menú superior al salir de login si es necesario
+        (requireActivity() as androidx.appcompat.app.AppCompatActivity).supportActionBar?.show()
         _binding = null
     }
 }
