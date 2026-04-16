@@ -10,24 +10,18 @@ import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.*
-import androidx.activity.result.contract.ActivityResultContracts
+import android.view.*
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.deviceappend.MainActivity
 import com.example.deviceappend.R
 
-// ========================================================
-// IMPORTACIONES EXPLÍCITAS PARA EVITAR EL ERROR DE CACHÉ
-// ========================================================
-import com.example.deviceappend.core.network.RetrofitClient
-import com.example.deviceappend.core.network.SaveEnrollmentRequest
-import com.example.deviceappend.core.network.EmployeeData
-import com.example.deviceappend.core.network.AiPhotoRequest
-import com.example.deviceappend.core.network.CandidateSearchRequest
-import com.example.deviceappend.core.network.FaceMatchRequest
+// IMPORTANTE: Importamos todos los modelos de red de golpe
+import com.example.deviceappend.core.network.*
 
 import com.example.deviceappend.utils.checkconnect
 import com.example.deviceappend.utils.hideLoader
