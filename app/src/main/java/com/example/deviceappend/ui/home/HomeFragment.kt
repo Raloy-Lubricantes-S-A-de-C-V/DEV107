@@ -29,7 +29,7 @@ import com.example.deviceappend.ui.empresas.EmpresasFragment
 import com.example.deviceappend.ui.prospectos.NotificationsFragment
 import com.example.deviceappend.ui.prospectos.ProspectosFragment
 import com.example.deviceappend.ui.tecnicos.TecnicosFragment
-import com.example.deviceappend.ui.wizard.WizardFragment
+import com.example.deviceappend.ui.wizard.HelpDeskFragment
 import com.example.deviceappend.utils.checkconnect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -206,7 +206,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun setupClickListeners() {
         val enrolarListener = View.OnClickListener {
-            (activity as? MainActivity)?.replaceFragment(WizardFragment(), true)
+            (activity as? MainActivity)?.replaceFragment(HelpDeskFragment(), true)
         }
         binding.btnHelpDesk.setOnClickListener(enrolarListener)
         binding.btnInventi.setOnClickListener(enrolarListener)

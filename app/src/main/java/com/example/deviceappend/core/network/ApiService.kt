@@ -4,9 +4,6 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.*
 
-// ==========================================
-// 1. MODELOS DE AUTENTICACIÓN (RESTAURADOS Y BLINDADOS)
-// ==========================================
 data class AuthAppRequest(
     @SerializedName("username") val username: String,
     @SerializedName("password") val password: String
@@ -89,9 +86,6 @@ data class NewTechnicianWebhookRequest(
     @SerializedName("asunto") val asunto: String? = null
 )
 
-// ==========================================
-// MODELOS PARA EMPRESAS
-// ==========================================
 data class Empresa(
     @SerializedName("id") val id: Int,
     @SerializedName("cveempresa") val cveempresa: String?,
@@ -128,9 +122,6 @@ data class EmpresaResponse(
     @SerializedName("msj") val msj: String? = null
 )
 
-// ==========================================
-// MODELOS PARA TÉCNICOS Y ASIGNACIÓN
-// ==========================================
 data class TecnicoConEmpresas(
     @SerializedName("id_usuario") val idUsuario: Int,
     @SerializedName("nombre") val nombre: String?,
@@ -146,9 +137,6 @@ data class AsignarEmpresasRequest(
     @SerializedName("empresas") val empresas: List<Int>
 )
 
-// ==========================================
-// MODELOS DE PROSPECTOS Y NOTIFICACIONES
-// ==========================================
 data class Prospecto(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String?,
@@ -179,16 +167,10 @@ data class AprobarProspectoRequest(
 )
 
 data class Notificacion(
-    val id: Int,
-    val modulo: String,
-    val descripcion: String,
-    val isRead: Boolean,
-    val prospectoId: Int
+    val id: Int, val modulo: String, val descripcion: String,
+    val isRead: Boolean, val prospectoId: Int
 )
 
-// ==========================================
-// MODELOS DELSIP
-// ==========================================
 data class DelsipEmpresa(
     @SerializedName("cveempresa") val cveempresa: String
 )
@@ -209,6 +191,67 @@ data class DelsipImageResponse(
     @SerializedName("msj") val msj: String?
 )
 
+// ==========================================
+// NUEVOS MODELOS PARA ENROLAMIENTO Y IA
+// ==========================================
+data class EmployeeData(
+    @SerializedName("nomina") val nomina: String?,
+    @SerializedName("nombre") val nombre: String?,
+    @SerializedName("paterno") val paterno: String?,
+    @SerializedName("materno") val materno: String?,
+    @SerializedName("curp") val curp: String?,
+    @SerializedName("sexo") val sexo: String?,
+    @SerializedName("fecha_nacimiento") val fecha_nacimiento: String?,
+    @SerializedName("edad") val edad: Int?,
+    @SerializedName("foto_base64") val foto_base64: String?
+)
+
+data class EmployeeResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: EmployeeData?
+)
+
+data class AiPhotoRequest(
+    @SerializedName("image_base64") val image_base64: String
+)
+
+data class AiPhotoResponse(
+    @SerializedName("sexo") val sexo: String,
+    @SerializedName("edad_minima") val edad_minima: Int,
+    @SerializedName("edad_maxima") val edad_maxima: Int
+)
+
+data class CandidateSearchRequest(
+    @SerializedName("sexo") val sexo: String,
+    @SerializedName("edad_min") val edad_min: Int,
+    @SerializedName("edad_max") val edad_max: Int
+)
+
+data class CandidateSearchResponse(
+    @SerializedName("error") val error: Boolean,
+    @SerializedName("data") val data: List<Map<String, String>>
+)
+
+data class FaceMatchRequest(
+    @SerializedName("original_base64") val original_base64: String,
+    @SerializedName("candidates") val candidates: List<Map<String, String>>
+)
+
+data class FaceMatchResponse(
+    @SerializedName("match_nomina") val match_nomina: String?,
+    @SerializedName("fingerprint") val fingerprint: String?
+)
+
+data class SaveEnrollmentRequest(
+    @SerializedName("modulo") val modulo: String,
+    @SerializedName("correo") val correo: String,
+    @SerializedName("tipo_registro") val tipo_registro: String,
+    @SerializedName("nomina") val nomina: String?,
+    @SerializedName("datos_extra") val datos_extra: Map<String, String>,
+    @SerializedName("fotografia_base64") val fotografia_base64: String?,
+    @SerializedName("huella_digital") val huella_digital: String?
+)
+
 interface ApiService {
     @GET("check-connectivity")
     suspend fun checkDatabaseConnectivity(): Response<Map<String, Any>>
@@ -219,9 +262,6 @@ interface ApiService {
     @POST("register-request")
     suspend fun registerNewUser(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    // ------------------------------------------
-    // ENDPOINTS DE AUTENTICACIÓN
-    // ------------------------------------------
     @POST("authenticate")
     suspend fun autenticateApp(@Body request: AuthAppRequest): Response<AuthResponse>
 
@@ -243,9 +283,6 @@ interface ApiService {
     @POST("https://n8n.raloy.com.mx/webhook/nuevo-tecnico")
     suspend fun sendNewTechnicianWebhook(@Body request: NewTechnicianWebhookRequest): Response<Unit>
 
-    // ------------------------------------------
-    // ENDPOINTS EMPRESAS
-    // ------------------------------------------
     @GET("empresas")
     suspend fun getEmpresas(): Response<EmpresaListResponse>
 
@@ -255,18 +292,12 @@ interface ApiService {
     @PUT("empresas/{id}")
     suspend fun updateEmpresa(@Path("id") id: Int, @Body request: EmpresaRequest): Response<EmpresaResponse>
 
-    // ------------------------------------------
-    // ENDPOINTS TÉCNICOS
-    // ------------------------------------------
     @GET("tecnicos/empresas")
     suspend fun getTecnicosConEmpresas(): Response<TecnicosListResponse>
 
     @PUT("tecnicos/{id_usuario}/empresas")
     suspend fun asignarEmpresasATecnico(@Path("id_usuario") idUsuario: Int, @Body request: AsignarEmpresasRequest): Response<EmpresaResponse>
 
-    // ------------------------------------------
-    // ENDPOINTS PROSPECTOS
-    // ------------------------------------------
     @GET("prospectos")
     suspend fun getProspectos(): Response<ProspectoListResponse>
 
@@ -279,12 +310,27 @@ interface ApiService {
     @POST("prospectos/{id}/aprobar")
     suspend fun aprobarProspecto(@Path("id") id: Int, @Body req: AprobarProspectoRequest): Response<Map<String, Any>>
 
-    // ------------------------------------------
-    // ENDPOINTS DELSIP
-    // ------------------------------------------
     @GET("delsip/test")
     suspend fun testDelsipConnection(): Response<DelsipTestResponse>
 
     @GET("delsip/testimage")
     suspend fun testDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
+
+    // ------------------------------------------
+    // ENDPOINTS ENROLAMIENTO Y BIOMETRÍA
+    // ------------------------------------------
+    @GET("delsip/empleado/{nomina}")
+    suspend fun getEmployeeByNomina(@Path("nomina") nomina: String): Response<EmployeeResponse>
+
+    @POST("https://n8n.raloy.com.mx/webhook/ai-analizar-foto")
+    suspend fun analyzePhotoAi(@Body req: AiPhotoRequest): Response<AiPhotoResponse>
+
+    @POST("delsip/candidatos")
+    suspend fun searchCandidates(@Body req: CandidateSearchRequest): Response<CandidateSearchResponse>
+
+    @POST("https://n8n.raloy.com.mx/webhook/match-rostros")
+    suspend fun matchFaces(@Body req: FaceMatchRequest): Response<FaceMatchResponse>
+
+    @POST("enrolamiento/guardar")
+    suspend fun saveEnrollment(@Body req: SaveEnrollmentRequest): Response<Map<String, Any>>
 }
