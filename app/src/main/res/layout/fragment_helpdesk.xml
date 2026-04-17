@@ -12,7 +12,6 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Título -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -22,7 +21,6 @@
             android:textColor="?attr/colorPrimary"
             android:textStyle="bold" />
 
-        <!-- Card de Identificación de Personal -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,14 +72,12 @@
                         android:text="Eventual" />
                 </RadioGroup>
 
-                <!-- Layout Dinámico: Mostrar Nómina o Verificación Facial según selección -->
                 <FrameLayout
                     android:id="@+id/flDinamico"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp">
 
-                    <!-- Entrada Nómina -->
                     <LinearLayout
                         android:id="@+id/llNomina"
                         android:layout_width="match_parent"
@@ -115,7 +111,6 @@
                             app:cornerRadius="12dp" />
                     </LinearLayout>
 
-                    <!-- Cámara Fotografía -->
                     <LinearLayout
                         android:id="@+id/llCamara"
                         android:layout_width="match_parent"
@@ -131,6 +126,18 @@
                             app:icon="@android:drawable/ic_menu_camera"
                             android:text="TOMAR FOTO"
                             app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnTestMockPhoto"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginTop="8dp"
+                            android:text="[TEST] CARGAR FOTO MOCK (SYS)"
+                            app:icon="@android:drawable/ic_menu_edit"
+                            android:textColor="#E91E63"
+                            app:iconTint="#E91E63"
+                            android:visibility="gone" />
 
                         <ImageView
                             android:id="@+id/ivFotoPreview"
@@ -155,7 +162,6 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Resultados de Búsqueda de Personal -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cvResultado"
             android:layout_width="match_parent"
@@ -190,7 +196,6 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Card Datos del Equipo -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -230,7 +235,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:orientation="vertical">
-                    
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnEnrolarHuella"
                         style="@style/Widget.Material3.Button.OutlinedButton"
