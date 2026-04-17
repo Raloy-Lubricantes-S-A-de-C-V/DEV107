@@ -66,12 +66,22 @@ data class EmployeeData(
 data class EmployeeResponse(@SerializedName("error") val error: Boolean, @SerializedName("data") val data: EmployeeData?)
 
 data class AiPhotoRequest(@SerializedName("image_base64") val image_base64: String)
-// (AiPhotoResponse ELIMINADO para usar JsonObject dinámico)
-
 data class CandidateSearchRequest(@SerializedName("sexo") val sexo: String, @SerializedName("edad_min") val edad_min: Int, @SerializedName("edad_max") val edad_max: Int)
 data class CandidateSearchResponse(@SerializedName("error") val error: Boolean, @SerializedName("data") val data: List<Map<String, String>>)
-data class FaceMatchRequest(@SerializedName("original_base64") val original_base64: String, @SerializedName("candidates") val candidates: List<Map<String, String>>)
-data class FaceMatchResponse(@SerializedName("match_nomina") val match_nomina: String?, @SerializedName("fingerprint") val fingerprint: String?)
+
+// ==========================================
+// NUEVOS MODELOS PARA EVALUACIÓN 1 vs 1 (N8N)
+// ==========================================
+data class CompareFacesRequest(
+    @SerializedName("foto_capturada") val fotoCapturada: String,
+    @SerializedName("foto_candidato") val fotoCandidato: String,
+    @SerializedName("nomina_candidato") val nominaCandidato: String
+)
+
+data class CompareFacesResponse(
+    @SerializedName("match") val match: Boolean,
+    @SerializedName("nomina") val nomina: String?
+)
 
 data class SaveEnrollmentRequest(
     @SerializedName("modulo") val modulo: String, @SerializedName("correo") val correo: String, @SerializedName("tipo_registro") val tipo_registro: String,
@@ -107,12 +117,12 @@ interface ApiService {
     @GET("delsip/testimage") suspend fun testDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
 
     @GET("delsip/empleado/{nomina}") suspend fun getEmployeeByNomina(@Path("nomina") nomina: String): Response<EmployeeResponse>
-
-    // AHORA RECIBE UN JSONOBJECT DINÁMICO PARA PODER EXTRAER LA DATA ESCONDIDA
-    @POST("https://n8n.raloy.com.mx/webhook/ai-analizar-foto")
-    suspend fun analyzePhotoAi(@Body req: AiPhotoRequest): Response<JsonObject>
-
+    @POST("https://n8n.raloy.com.mx/webhook/ai-analizar-foto") suspend fun analyzePhotoAi(@Body req: AiPhotoRequest): Response<JsonObject>
     @POST("delsip/candidatos") suspend fun searchCandidates(@Body req: CandidateSearchRequest): Response<CandidateSearchResponse>
-    @POST("https://n8n.raloy.com.mx/webhook/match-rostros") suspend fun matchFaces(@Body req: FaceMatchRequest): Response<FaceMatchResponse>
+
+    // NUEVO WEBHOOK DE COMPARACIÓN 1 a 1 (El que crearás en N8N)
+    @POST("https://n8n.raloy.com.mx/webhook/ai-comparar-rostros")
+    suspend fun compareFacesAi(@Body req: CompareFacesRequest): Response<CompareFacesResponse>
+
     @POST("enrolamiento/guardar") suspend fun saveEnrollment(@Body req: SaveEnrollmentRequest): Response<Map<String, Any>>
 }
