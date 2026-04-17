@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit // IMPORTANTE: Importamos esto para medir el tiempo
 
 object RetrofitClient {
     private const val BASE_URL = "https://apir.raloy.com.mx/kioskoit/api/v1/"
@@ -21,12 +22,17 @@ object RetrofitClient {
             val logging = HttpLoggingInterceptor { message ->
                 Log.d("RetrofitLog", message)
             }.apply {
-                // CAMBIO CRÍTICO: Usamos BASIC en lugar de BODY.
-                // Esto evita el OutOfMemoryError al no intentar imprimir los 71MB de Base64 en consola.
                 level = HttpLoggingInterceptor.Level.BASIC
             }
 
+            // ==========================================
+            // EXTENSIÓN DE TIEMPO PARA LA INTELIGENCIA ARTIFICIAL
+            // (60 segundos de paciencia para evitar SocketTimeoutException)
+            // ==========================================
             val okHttpClient = OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS) // Tiempo máximo para conectar
+                .readTimeout(60, TimeUnit.SECONDS)    // Tiempo máximo esperando respuesta (Gemini)
+                .writeTimeout(60, TimeUnit.SECONDS)   // Tiempo máximo para subir los datos
                 .addInterceptor(logging)
                 .addInterceptor(AuthInterceptor(context))
                 .build()
