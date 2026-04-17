@@ -16,17 +16,18 @@ object RetrofitClient {
         if (retrofit == null) {
 
             // ==========================================
-            // LOGGING INTERCEPTOR (MODO DIOS)
+            // LOGGING INTERCEPTOR
             // ==========================================
-            // Esto imprimirá en el Logcat de Android Studio toda la petición HTTP
             val logging = HttpLoggingInterceptor { message ->
                 Log.d("RetrofitLog", message)
             }.apply {
-                level = HttpLoggingInterceptor.Level.BODY // Muestra URL, Headers y Body
+                // CAMBIO CRÍTICO: Usamos BASIC en lugar de BODY.
+                // Esto evita el OutOfMemoryError al no intentar imprimir los 71MB de Base64 en consola.
+                level = HttpLoggingInterceptor.Level.BASIC
             }
 
             val okHttpClient = OkHttpClient.Builder()
-                .addInterceptor(logging) // Lo agregamos aquí
+                .addInterceptor(logging)
                 .addInterceptor(AuthInterceptor(context))
                 .build()
 
