@@ -63,23 +63,12 @@ data class EmployeeData(
     @SerializedName("materno") val materno: String?, @SerializedName("curp") val curp: String?, @SerializedName("sexo") val sexo: String?,
     @SerializedName("fecha_nacimiento") val fecha_nacimiento: String?, @SerializedName("edad") val edad: Int?, @SerializedName("foto_base64") val foto_base64: String?
 )
-
-// MODELO LIGERO PARA EVITAR OutOfMemory en el listado masivo
-data class EmployeeSummary(
-    @SerializedName("nomina") val nomina: String?,
-    @SerializedName("nombre") val nombre: String?,
-    @SerializedName("edad") val edad: Int?
-)
-
 data class EmployeeResponse(@SerializedName("error") val error: Boolean, @SerializedName("data") val data: EmployeeData?)
 
 data class AiPhotoRequest(@SerializedName("image_base64") val image_base64: String)
 data class CandidateSearchRequest(@SerializedName("sexo") val sexo: String, @SerializedName("edad_min") val edad_min: Int, @SerializedName("edad_max") val edad_max: Int)
 data class CandidateSearchResponse(@SerializedName("error") val error: Boolean, @SerializedName("data") val data: List<Map<String, String>>)
 
-// ==========================================
-// NUEVOS MODELOS PARA EVALUACIÓN 1 vs 1 (N8N)
-// ==========================================
 data class CompareFacesRequest(
     @SerializedName("foto_capturada") val fotoCapturada: String,
     @SerializedName("foto_candidato") val fotoCandidato: String,
@@ -97,25 +86,25 @@ data class SaveEnrollmentRequest(
     @SerializedName("fotografia_base64") val fotografia_base64: String?, @SerializedName("huella_digital") val huella_digital: String?
 )
 
-data class FaceIdBiometricRequest(
+// ==========================================
+// NUEVOS MODELOS PARA HUELLAS MASIVAS (BD)
+// ==========================================
+data class SaveHashRequest(
     @SerializedName("nomina") val nomina: String,
     @SerializedName("edad") val edad: Int,
-    @SerializedName("biometric_hash") val biometricHash: String
+    @SerializedName("biometric_hash") val biometric_hash: String
 )
 
-data class AiBiometricResponse(
-    @SerializedName("biometric_hash") val biometricHash: String
-)
-
-data class AiPhotoAnalysisResponse(
+data class ActiveEmployeeItem(
+    @SerializedName("nomina") val nomina: String,
     @SerializedName("sexo") val sexo: String,
-    @SerializedName("edad_minima") val edadMinima: Int,
-    @SerializedName("edad_maxima") val edadMaxima: Int
+    @SerializedName("edad") val edad: Int,
+    @SerializedName("foto_base64") val foto_base64: String?
 )
 
 data class ActiveEmployeesResponse(
     @SerializedName("error") val error: Boolean,
-    @SerializedName("data") val data: List<EmployeeSummary>
+    @SerializedName("data") val data: List<ActiveEmployeeItem>
 )
 
 interface ApiService {
@@ -146,24 +135,15 @@ interface ApiService {
     @GET("delsip/testimage") suspend fun testDelsipImage(@Query("nomina") nomina: String): Response<DelsipImageResponse>
 
     @GET("delsip/empleado/{nomina}") suspend fun getEmployeeByNomina(@Path("nomina") nomina: String): Response<EmployeeResponse>
-    
-    // FASE 1: Obtener todos los empleados activos para enrolamiento masivo (CORREGIDO)
-    @GET("delsip/empleados/activos") suspend fun getActiveEmployees(): Response<ActiveEmployeesResponse>
-
-    // WEBHOOKS N8N
-    @POST("https://n8n.raloy.com.mx/webhook/ai-analizar-foto") suspend fun analyzePhotoAi(@Body req: AiPhotoRequest): Response<AiPhotoAnalysisResponse>
-    
-    // Webhook para generar huella (Nodo Gemini con Prompt de biometría)
-    @POST("https://n8n.raloy.com.mx/webhook/ai-generar-huella") suspend fun generateBiometricHash(@Body req: AiPhotoRequest): Response<AiBiometricResponse>
-
+    @POST("https://n8n.raloy.com.mx/webhook/ai-analizar-foto") suspend fun analyzePhotoAi(@Body req: AiPhotoRequest): Response<JsonObject>
     @POST("delsip/candidatos") suspend fun searchCandidates(@Body req: CandidateSearchRequest): Response<CandidateSearchResponse>
-
-    // GUARDAR HUELLA EN BD
-    @POST("delsip/faceid/guardar-huella") suspend fun saveBiometricHash(@Body req: FaceIdBiometricRequest): Response<Map<String, Any>>
-
-    // NUEVO WEBHOOK DE COMPARACIÓN 1 a 1 (El que crearás en N8N)
-    @POST("https://n8n.raloy.com.mx/webhook/ai-comparar-rostros")
-    suspend fun compareFacesAi(@Body req: CompareFacesRequest): Response<CompareFacesResponse>
-
+    @POST("https://n8n.raloy.com.mx/webhook/ai-comparar-rostros") suspend fun compareFacesAi(@Body req: CompareFacesRequest): Response<CompareFacesResponse>
     @POST("enrolamiento/guardar") suspend fun saveEnrollment(@Body req: SaveEnrollmentRequest): Response<Map<String, Any>>
+
+    // ==========================================
+    // NUEVOS ENDPOINTS (HUELLAS MASIVAS Y BD)
+    // ==========================================
+    @GET("delsip/empleados/activos") suspend fun getActiveEmployees(): Response<ActiveEmployeesResponse>
+    @POST("delsip/faceid/guardar-huella") suspend fun saveBiometricHash(@Body req: SaveHashRequest): Response<Map<String, Any>>
+    @POST("https://n8n.raloy.com.mx/webhook/ai-generar-huella") suspend fun generateFaceIdHashAi(@Body req: AiPhotoRequest): Response<JsonObject>
 }
