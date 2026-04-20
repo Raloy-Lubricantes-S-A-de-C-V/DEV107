@@ -18,6 +18,7 @@
             <item android:id="@+id/action_tecnicos" android:title="Gestión de Técnicos" />
             <item android:id="@+id/action_empresas" android:title="Creación de empresas" />
             <item android:id="@+id/action_new_scanner" android:title="Escanear Etiqueta" />
+            <item android:id="@+id/action_delsip" android:title="Módulo DelSIP" />
         </menu>
     </item>
 

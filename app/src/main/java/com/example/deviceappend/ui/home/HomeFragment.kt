@@ -85,6 +85,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 menu.findItem(R.id.action_empresas)?.isVisible = sessionManager.isSys()
                 menu.findItem(R.id.action_tecnicos)?.isVisible = sessionManager.isAdmin()
                 menu.findItem(R.id.action_prospectos)?.isVisible = sessionManager.isAdmin()
+                menu.findItem(R.id.action_delsip)?.isVisible = sessionManager.isSys()
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -107,6 +108,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                     R.id.action_new_scanner -> {
                         (activity as? MainActivity)?.replaceFragment(ScannerFragment(), true)
+                        true
+                    }
+                    R.id.action_delsip -> {
+                        (activity as? MainActivity)?.replaceFragment(DelsipTestFragment(), true)
                         true
                     }
                     else -> false

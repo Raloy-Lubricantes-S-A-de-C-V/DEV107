@@ -164,116 +164,67 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
         }
 
         // ==========================================
-        // PROCESADOR INTELIGENTE (EVALUACIÓN 1 x 1 con N8N)
+        // PROCESADOR FACEID (OPTIMIZADO)
         // ==========================================
         btnProcesarIA.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
-                showLoader("Paso 1/3: Analizando con Gemini Vision...")
+                showLoader("Paso 1/4: Analizando perfil (Edad/Sexo)...")
                 try {
                     val api = RetrofitClient.instance
 
-                    // 1. Mandamos la foto para sacar Rango de Edad y Sexo
+                    // 1. Obtener Rango de Edad y Sexo mediante IA
                     val aiRes = api.analyzePhotoAi(AiPhotoRequest(currentBase64Photo))
-                    if (!aiRes.isSuccessful) throw Exception("Fallo IA (HTTP ${aiRes.code()})")
+                    if (!aiRes.isSuccessful) throw Exception("Fallo Análisis (HTTP ${aiRes.code()})")
+                    val aiData = aiRes.body()!!
 
-                    val aiData = aiRes.body() ?: throw Exception("N8N devolvió cuerpo vacío")
+                    val sexoDetectado = aiData.sexo
+                    val edadMin = aiData.edadMinima
+                    val edadMax = aiData.edadMaxima
 
-                    var textJson = ""
-                    try {
-                        if (aiData.has("content")) {
-                            textJson = aiData.getAsJsonObject("content")
-                                .getAsJsonArray("parts")
-                                .get(0).asJsonObject
-                                .get("text").asString
-                        } else if (aiData.has("candidates")) {
-                            textJson = aiData.getAsJsonArray("candidates")
-                                .get(0).asJsonObject
-                                .getAsJsonObject("content")
-                                .getAsJsonArray("parts")
-                                .get(0).asJsonObject
-                                .get("text").asString
-                        } else if (aiData.has("text")) {
-                            textJson = aiData.get("text").asString
-                        } else {
-                            throw Exception("La respuesta no contiene 'content', 'candidates' ni 'text'")
-                        }
-                    } catch (e: Exception) {
-                        throw Exception("No se pudo leer la estructura del JSON: ${e.message}")
-                    }
+                    showLoader("Paso 2/4: Generando Huella Biométrica Única...")
 
-                    val cleanJson = textJson.replace("```json", "").replace("```", "").trim()
-                    val jsonObj = org.json.JSONObject(cleanJson)
-                    val sexoDetectado = jsonObj.getString("sexo")
-                    val edadMin = jsonObj.getInt("edad_minima")
-                    val edadMax = jsonObj.getInt("edad_maxima")
+                    // 2. Generar el Hash/Llave de la foto actual (Solo una llamada)
+                    val hashRes = api.generateBiometricHash(AiPhotoRequest(currentBase64Photo))
+                    if (!hashRes.isSuccessful) throw Exception("Fallo Generación de Huella")
+                    val currentHash = hashRes.body()!!.biometricHash
 
-                    showLoader("Paso 2/3: Buscando $sexoDetectado de $edadMin a $edadMax años en DelSIP...")
+                    showLoader("Paso 3/4: Buscando candidatos en DelSIP...")
 
-                    // 2. Buscamos el lote de candidatos que cumplan esas características
+                    // 3. Buscar candidatos en la nueva tabla (Filtro por Edad/Sexo)
                     val candRes = api.searchCandidates(CandidateSearchRequest(sexoDetectado, edadMin, edadMax))
                     if (!candRes.isSuccessful) throw Exception("Fallo Búsqueda SQL")
                     val candidatos = candRes.body()!!.data
 
                     if (candidatos.isEmpty()) {
-                        throw Exception("No se encontraron candidatos con el perfil de $sexoDetectado entre $edadMin y $edadMax años.")
+                        throw Exception("No hay candidatos en el rango detectado ($sexoDetectado, $edadMin-$edadMax años).")
                     }
 
+                    showLoader("Paso 4/4: Comparando biometría local...")
+
+                    // 4. MATCH LOCAL: Buscamos la coincidencia de Hash en el listado
                     var matchFound = false
-
-                    // ==========================================
-                    // 3. CICLO DE COMPARACIÓN BIOMÉTRICA (1 x 1)
-                    // ==========================================
-                    for ((index, candidato) in candidatos.withIndex()) {
-                        showLoader("Paso 3/3: Comparando rostro ${index + 1}/${candidatos.size} con IA...")
-
-                        val fotoCandidatoRaw = candidato["foto"] ?: candidato["foto_base64"] ?: ""
-                        val nominaCandidato = candidato["nomina"] ?: ""
-
-                        if (fotoCandidatoRaw.isEmpty()) continue // Saltamos si el empleado de SQL no tiene foto
-
-                        // Limpiamos los prefijos MIME por seguridad (ej. "data:image/jpeg;base64,")
-                        val safeFotoCandidato = fotoCandidatoRaw.replace("\\s+".toRegex(), "").let {
-                            if (it.contains(",")) it.substringAfter(",") else it
-                        }
-
-                        // Creamos la petición 1x1 para N8N
-                        val req = CompareFacesRequest(
-                            fotoCapturada = currentBase64Photo,
-                            fotoCandidato = safeFotoCandidato,
-                            nominaCandidato = nominaCandidato
-                        )
-
-                        // 4. Llamamos al NUEVO WEBHOOK que evaluarás mediante un Prompt en Gemini
-                        val matchRes = api.compareFacesAi(req)
-
-                        if (matchRes.isSuccessful) {
-                            val matchData = matchRes.body()!!
-
-                            // Si N8N dice que la persona de ambas fotos es la misma
-                            if (matchData.match) {
-                                matchFound = true
-                                currentNomina = matchData.nomina ?: nominaCandidato
-
-                                // Generamos la huella matemática para validaciones futuras directas
-                                currentFingerprint = generateFingerprint(currentBase64Photo)
-
-                                break // Rompemos el ciclo FOR para no gastar recursos evaluando a los demás
-                            }
-                        } else {
-                            Log.w("HelpDesk", "Fallo al consultar a Gemini sobre nómina $nominaCandidato")
+                    for (candidato in candidatos) {
+                        val storedHash = candidato["biometric_hash"] ?: ""
+                        
+                        // Aquí la comparación es directa sobre la llave generada por Gemini
+                        if (storedHash == currentHash) {
+                            matchFound = true
+                            currentNomina = candidato["nomina"] ?: ""
+                            currentFingerprint = currentHash
+                            break
                         }
                     }
 
                     if (!matchFound) {
-                        throw Exception("Ningún candidato de la base de datos es la persona de la fotografía.")
+                        throw Exception("No se encontró una coincidencia biométrica válida en el listado de candidatos.")
                     }
 
-                    // 5. Jalamos los Generales a la pantalla si encontramos un Match
+                    // 5. Mostrar generales si hubo éxito
                     fetchEmployeeData(currentNomina)
 
                 } catch (e: Exception) {
-                    Log.e("HelpDeskIA", "Error procesando IA", e)
-                    Toast.makeText(context, "Error en procesamiento IA: ${e.message}", Toast.LENGTH_LONG).show()
+                    Log.e("FaceID", "Error en proceso: ${e.message}")
+                    Toast.makeText(context, "FaceID Error: ${e.message}", Toast.LENGTH_LONG).show()
                 } finally {
                     hideLoader()
                 }

@@ -3,6 +3,7 @@ package com.example.deviceappend.ui.delsip
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.Toast
@@ -20,6 +21,8 @@ import com.example.deviceappend.utils.hideLoader
 import com.example.deviceappend.utils.showLoader
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.example.deviceappend.core.network.AiPhotoRequest
+import com.example.deviceappend.core.network.FaceIdBiometricRequest
 import kotlinx.coroutines.launch
 
 class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
@@ -32,8 +35,8 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
         super.onViewCreated(view, savedInstanceState)
         sessionManager = SessionManager(requireContext())
 
-        if (!sessionManager.isAdmin()) {
-            Toast.makeText(context, "Acceso denegado al módulo de diagnóstico.", Toast.LENGTH_SHORT).show()
+        if (!sessionManager.isSys()) {
+            Toast.makeText(context, "Acceso restringido a administradores de sistema.", Toast.LENGTH_SHORT).show()
             (activity as? MainActivity)?.supportFragmentManager?.popBackStack()
             return
         }
@@ -43,6 +46,7 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
         checkconnect(view, "Cargando Diagnóstico DelSIP...") {
             val btnTestDb = view.findViewById<MaterialButton>(R.id.btnTestDb)
             val btnTestFolders = view.findViewById<MaterialButton>(R.id.btnTestFolders)
+            val btnFaceIdEnroll = view.findViewById<MaterialButton>(R.id.btnFaceIdEnroll)
 
             ivTestImage = view.findViewById(R.id.ivTestImage)
             etNominaTest = view.findViewById(R.id.etNominaTest)
@@ -53,6 +57,67 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
 
             btnTestFolders.setOnClickListener {
                 testImageExtraction()
+            }
+
+            btnFaceIdEnroll.setOnClickListener {
+                startFaceIdEnrollment()
+            }
+        }
+    }
+
+    private fun startFaceIdEnrollment() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            System.out.println(">>> FACEID_DEBUG: Iniciando startFaceIdEnrollment")
+            showLoader("Obteniendo lista de nóminas...")
+            try {
+                System.out.println(">>> FACEID_DEBUG: Llamando a getActiveEmployees()...")
+                val response = RetrofitClient.instance.getActiveEmployees()
+                System.out.println(">>> FACEID_DEBUG: Respuesta recibida. Código: ${response.code()}")
+                
+                if (response.isSuccessful && response.body()?.error == false) {
+                    val employees = response.body()!!.data
+                    val total = employees.size
+                    System.out.println(">>> FACEID_DEBUG: Empleados cargados: $total")
+                    
+                    var processed = 0
+                    for (emp in employees) {
+                        processed++
+                        val nomina = emp.nomina ?: continue
+                        System.out.println(">>> FACEID_DEBUG: [$processed/$total] Procesando nómina: $nomina")
+                        showLoader("Procesando $processed de $total\n$nomina - ${emp.nombre}")
+                        
+                        try {
+                            val imgRes = RetrofitClient.instance.testDelsipImage(nomina)
+                            val fotoBase64 = imgRes.body()?.data?.imageBase64
+
+                            if (!fotoBase64.isNullOrEmpty()) {
+                                val hashRes = RetrofitClient.instance.generateBiometricHash(AiPhotoRequest(fotoBase64))
+                                if (hashRes.isSuccessful && hashRes.body() != null) {
+                                    val hash = hashRes.body()!!.biometricHash
+                                    
+                                    RetrofitClient.instance.saveBiometricHash(FaceIdBiometricRequest(
+                                        nomina = nomina,
+                                        edad = emp.edad ?: 0,
+                                        biometricHash = hash
+                                    ))
+                                }
+                            }
+                        } catch (e: Exception) {
+                            System.out.println(">>> FACEID_DEBUG: Error en nómina $nomina: ${e.message}")
+                        }
+                    }
+                    hideLoader()
+                    Toast.makeText(context, "✅ Enrolamiento masivo completado.", Toast.LENGTH_LONG).show()
+                } else {
+                    hideLoader()
+                    System.out.println(">>> FACEID_DEBUG: Error API o body nulo")
+                    Toast.makeText(context, "❌ Error al obtener lista de empleados", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                hideLoader()
+                System.out.println(">>> FACEID_DEBUG: EXCEPCIÓN CRÍTICA: ${e.message}")
+                e.printStackTrace()
+                Toast.makeText(context, "❌ Error crítico: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

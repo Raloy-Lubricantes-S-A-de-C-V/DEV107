@@ -22,7 +22,7 @@ object RetrofitClient {
             val logging = HttpLoggingInterceptor { message ->
                 Log.d("RetrofitLog", message)
             }.apply {
-                level = HttpLoggingInterceptor.Level.BASIC
+                level = HttpLoggingInterceptor.Level.HEADERS
             }
 
             // ==========================================
