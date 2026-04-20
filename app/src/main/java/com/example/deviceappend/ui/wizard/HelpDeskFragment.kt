@@ -323,23 +323,26 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
             try {
                 val api = RetrofitClient.instance
 
-                // 1. Obtener la lista completa de empleados activos
+                // 1. Obtener la lista de empleados activos (Python ya filtró a los que ya tienen huella)
                 val empRes = api.getActiveEmployees()
                 if (!empRes.isSuccessful) throw Exception("Fallo HTTP al obtener empleados activos: ${empRes.code()}")
 
                 val empleados = empRes.body()?.data ?: emptyList()
-                if (empleados.isEmpty()) throw Exception("La lista de empleados de Delsip está vacía")
+                if (empleados.isEmpty()) {
+                    Toast.makeText(context, "¡Todo al día! No hay empleados nuevos por enrolar.", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
 
                 var successCount = 0
 
-                // 2. Iterar cada uno de forma asíncrona pero controlada para evitar OOM
+                // 2. Iterar cada empleado
                 for ((index, emp) in empleados.withIndex()) {
-                    showLoader(">>> Procesando [${index + 1}/${empleados.size}]\nNómina: ${emp.nomina}")
+                    showLoader(">>> Procesando Pendiente [${index + 1}/${empleados.size}]\nNómina: ${emp.nomina}")
                     Log.i("FACEID_DEBUG", ">>> FACEID_DEBUG: [${index + 1}/${empleados.size}] Procesando nómina: ${emp.nomina}")
 
                     var base64Photo = emp.foto_base64 ?: ""
 
-                    // Fallback: Si no venía la foto en el endpoint inicial, la pedimos directamente
+                    // Fallback: Si no venía la foto, la pedimos directamente
                     if (base64Photo.isEmpty() || base64Photo.length < 100) {
                         try {
                             val imgRes = api.testDelsipImage(emp.nomina)
@@ -355,10 +358,10 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
                         }
 
                         try {
-                            // 3. Enviar la foto limpia al webhook de Gemini para la huella matemática
+                            // 3. Enviar la foto al webhook de Gemini
                             val aiRes = api.generateFaceIdHashAi(AiPhotoRequest(cleanBase64))
                             if (aiRes.isSuccessful) {
-                                val aiData = aiRes.body() ?: throw Exception("Body vacío N8N")
+                                val aiData = aiRes.body() ?: throw Exception("Body vacío N8N en nómina ${emp.nomina}")
 
                                 var hashGenerado = ""
                                 if (aiData.has("fingerprint")) {
@@ -386,14 +389,20 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
                                         successCount++
                                         Log.i("FACEID_DEBUG", "✅ Huella guardada en Postgres para nómina: ${emp.nomina}")
                                     } else {
-                                        Log.e("FACEID_DEBUG", "❌ Fallo al guardar en BD nómina ${emp.nomina}: ${saveRes.errorBody()?.string()}")
+                                        // ¡AQUÍ LO TRONAMOS SI LA BD RECHAZA EL GUARDADO!
+                                        throw Exception("La base de datos rechazó guardar la nómina ${emp.nomina}. Proceso Abortado.")
                                     }
                                 } else {
                                     Log.w("FACEID_DEBUG", "⚠️ N8N/Gemini no devolvió un hash válido para nómina: ${emp.nomina}")
                                 }
+                            } else {
+                                // Lo tronamos si N8N falla
+                                throw Exception("El servidor de Inteligencia Artificial falló en la nómina ${emp.nomina}.")
                             }
                         } catch(e: Exception) {
-                            Log.e("FACEID_DEBUG", "❌ Error de red en nómina ${emp.nomina}: ${e.message}")
+                            // Lo tronamos si ocurre un SocketTimeout o caída de red
+                            Log.e("FACEID_DEBUG", "❌ Error Crítico: ${e.message}")
+                            throw Exception("Fallo de red o servidor en nómina ${emp.nomina}: ${e.message}")
                         }
                     } else {
                         Log.w("FACEID_DEBUG", "⚠️ Se omitió nómina ${emp.nomina} porque no tiene fotografía.")
@@ -404,15 +413,14 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
                 Log.i("FACEID_DEBUG", "=== FIN DEL PROCESO MASIVO. Éxitos: $successCount/${empleados.size} ===")
 
             } catch (e: Exception) {
+                // Al "tronar" el proceso arriba, caerá directo aquí, limpiando la pantalla y avisándote el error exacto
                 Log.e("FACEID_DEBUG", "Error crítico en proceso masivo:", e)
-                Toast.makeText(context, "Error crítico: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Detenido por Error: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 hideLoader()
             }
         }
     }
-
-
     private fun checkCameraPermissionAndOpen() {
         if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             openCamera()
