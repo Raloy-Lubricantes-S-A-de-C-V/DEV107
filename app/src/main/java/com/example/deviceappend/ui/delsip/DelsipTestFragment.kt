@@ -22,8 +22,9 @@ import com.example.deviceappend.utils.showLoader
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.example.deviceappend.core.network.AiPhotoRequest
-import com.example.deviceappend.core.network.FaceIdBiometricRequest
+import com.example.deviceappend.core.network.SaveHashRequest // Corregido: Este es el modelo correcto
 import kotlinx.coroutines.launch
+import org.json.JSONObject // Agregado para extraer el hash de forma segura
 
 class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
 
@@ -73,34 +74,75 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
                 System.out.println(">>> FACEID_DEBUG: Llamando a getActiveEmployees()...")
                 val response = RetrofitClient.instance.getActiveEmployees()
                 System.out.println(">>> FACEID_DEBUG: Respuesta recibida. Código: ${response.code()}")
-                
+
                 if (response.isSuccessful && response.body()?.error == false) {
                     val employees = response.body()!!.data
                     val total = employees.size
                     System.out.println(">>> FACEID_DEBUG: Empleados cargados: $total")
-                    
+
                     var processed = 0
                     for (emp in employees) {
                         processed++
                         val nomina = emp.nomina ?: continue
                         System.out.println(">>> FACEID_DEBUG: [$processed/$total] Procesando nómina: $nomina")
-                        showLoader("Procesando $processed de $total\n$nomina - ${emp.nombre}")
-                        
-                        try {
-                            val imgRes = RetrofitClient.instance.testDelsipImage(nomina)
-                            val fotoBase64 = imgRes.body()?.data?.imageBase64
 
-                            if (!fotoBase64.isNullOrEmpty()) {
-                                val hashRes = RetrofitClient.instance.generateBiometricHash(AiPhotoRequest(fotoBase64))
-                                if (hashRes.isSuccessful && hashRes.body() != null) {
-                                    val hash = hashRes.body()!!.biometricHash
-                                    
-                                    RetrofitClient.instance.saveBiometricHash(FaceIdBiometricRequest(
-                                        nomina = nomina,
-                                        edad = emp.edad ?: 0,
-                                        biometricHash = hash
-                                    ))
+                        // CORRECCIÓN: Quitamos emp.nombre porque la API de empleados activos no lo devuelve
+                        showLoader("Procesando $processed de $total\nNómina: $nomina")
+
+                        try {
+                            var fotoBase64 = emp.foto_base64
+
+                            // Validamos si la foto vino vacía, la pedimos individualmente (Fallback)
+                            if (fotoBase64.isNullOrEmpty() || fotoBase64.length < 100) {
+                                val imgRes = RetrofitClient.instance.testDelsipImage(nomina)
+                                if (imgRes.isSuccessful) {
+                                    fotoBase64 = imgRes.body()?.data?.imageBase64
                                 }
+                            }
+
+                            if (!fotoBase64.isNullOrEmpty() && fotoBase64.length > 100) {
+                                // Limpiamos el Base64 de cualquier etiqueta MIME
+                                val cleanBase64 = fotoBase64.replace("\\s+".toRegex(), "").let {
+                                    if (it.contains(",")) it.substringAfter(",") else it
+                                }
+
+                                // CORRECCIÓN: Nombre de función actualizado a generateFaceIdHashAi
+                                val hashRes = RetrofitClient.instance.generateFaceIdHashAi(AiPhotoRequest(cleanBase64))
+
+                                if (hashRes.isSuccessful && hashRes.body() != null) {
+                                    val aiData = hashRes.body()!!
+
+                                    // BLINDAJE: Extracción segura del JSON de N8N/Gemini
+                                    var hashGenerado = ""
+                                    if (aiData.has("fingerprint")) {
+                                        hashGenerado = aiData.get("fingerprint").asString
+                                    } else if (aiData.has("content")) {
+                                        val text = aiData.getAsJsonObject("content").getAsJsonArray("parts").get(0).asJsonObject.get("text").asString
+                                        val cleanText = text.replace("```json", "").replace("```", "").trim()
+                                        hashGenerado = org.json.JSONObject(cleanText).optString("fingerprint", "")
+                                    } else if (aiData.has("text")) {
+                                        val text = aiData.get("text").asString
+                                        val cleanText = text.replace("```json", "").replace("```", "").trim()
+                                        hashGenerado = org.json.JSONObject(cleanText).optString("fingerprint", "")
+                                    }
+
+                                    if (hashGenerado.isNotEmpty() && hashGenerado.lowercase() != "false") {
+                                        // CORRECCIÓN: Nombre de Request actualizado a SaveHashRequest
+                                        val saveRes = RetrofitClient.instance.saveBiometricHash(SaveHashRequest(
+                                            nomina = nomina,
+                                            edad = emp.edad ?: 0,
+                                            biometric_hash = hashGenerado
+                                        ))
+
+                                        if (saveRes.isSuccessful) {
+                                            Log.i("FACEID_DEBUG", "✅ Huella guardada en Postgres para nómina: $nomina")
+                                        } else {
+                                            Log.e("FACEID_DEBUG", "❌ Fallo al guardar en BD: ${saveRes.errorBody()?.string()}")
+                                        }
+                                    }
+                                }
+                            } else {
+                                Log.w("FACEID_DEBUG", "⚠️ Se omitió nómina $nomina porque no tiene fotografía.")
                             }
                         } catch (e: Exception) {
                             System.out.println(">>> FACEID_DEBUG: Error en nómina $nomina: ${e.message}")
@@ -197,7 +239,7 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
     private fun setupMenu() {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            override fun onCreateMenu(menu: android.view.Menu, menuInflater: android.view.MenuInflater) {
                 menu.clear()
                 menuInflater.inflate(R.menu.main_menu, menu)
                 menu.findItem(R.id.action_home)?.isVisible = true
@@ -205,7 +247,7 @@ class DelsipTestFragment : Fragment(R.layout.fragment_delsip_test) {
                 menu.findItem(R.id.action_notifications)?.isVisible = false
                 menu.findItem(R.id.action_modules)?.isVisible = false
             }
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
+            override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean = false
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 }
