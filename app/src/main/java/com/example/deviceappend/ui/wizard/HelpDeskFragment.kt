@@ -319,6 +319,7 @@ class HelpDeskFragment : Fragment(R.layout.fragment_helpdesk) {
     // ==========================================
     private fun startMassiveHashGeneration() {
         viewLifecycleOwner.lifecycleScope.launch {
+
             showLoader("Iniciando Enrolamiento Masivo (BD)...")
             try {
                 val api = RetrofitClient.instance
